@@ -7,6 +7,7 @@ import java.net.Proxy;
 import java.util.Properties;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +23,9 @@ public class SlackBot {
 
         LOG.info("Starting session...");
         SlackSession session;
-        if (PROPS.containsKey(Constants.PROXY_HOST)) {
-            String proxyURL = PROPS.getProperty(Constants.PROXY_HOST);
+
+        String proxyURL = PROPS.getProperty(Constants.PROXY_HOST);
+        if (StringUtils.isNotBlank(proxyURL)) {
             int proxyPort = Integer.parseInt(PROPS.getProperty(Constants.PROXY_PORT, "80"));
             session = SlackSessionFactory.createWebSocketSlackSession(PROPS.getProperty(Constants.BOT_TOKEN), Proxy.Type.HTTP, proxyURL, proxyPort);
         } else {
@@ -35,7 +37,7 @@ public class SlackBot {
         session.addMessagePostedListener(new BoardGameListener());
         // Add help listener
         session.addMessagePostedListener(new HelpListener());
-        
+
         LOG.info("Session connected: {}", session.isConnected());
         LOG.info("  Connected to {} ({})", session.getTeam().getName(), session.getTeam().getId());
         LOG.info("  Found {} channels and {} users", session.getChannels().size(), session.getUsers().size());
