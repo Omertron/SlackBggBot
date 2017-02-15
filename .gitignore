@@ -63,4 +63,5 @@ $RECYCLE.BIN/
 *.lnk
 /target/
 **/application.properties
-src/main/resources/application.properties
+/application.properties
+/nbactions.xml
