@@ -8,6 +8,51 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <developers>
+        <developer>
+            <name>Stuart Boston</name>
+            <email>omertron@gmail.com</email>
+            <id>omertron</id>
+            <url>http://omertron.com</url>
+            <timezone>0</timezone>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
+    
+    <licenses>
+        <license>
+            <name>GNU General Public License v3+</name>
+            <url>http://www.gnu.org/licenses/gpl-3.0-standalone.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+ 
+    <scm>
+        <url>scm:git:git@github.com:Omertron/SlackBggBot.git</url>
+        <connection>scm:git:git@github.com:Omertron/SlackBggBot.git</connection>
+        <developerConnection>scm:git:git@github.com:Omertron/SlackBggBot.git</developerConnection>
+    </scm>
+ 
+    <distributionManagement>
+        <site>
+            <id>github-project-site</id>
+            <name>GitHub Project Pages</name>
+            <url>gitsite:git@github.com/Omertron/SlackBggBot.git</url>
+        </site>
+    </distributionManagement>
+ 
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/Omertron/SlackBggBot/issues</url>
+    </issueManagement>
+ 
+    <ciManagement>
+        <system>Jenkins CI</system>
+        <url>http://jenkins.omertron.com/job/SlackBggBot/</url>
+    </ciManagement>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
