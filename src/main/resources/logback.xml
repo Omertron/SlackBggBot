@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+        <encoder>
+            <pattern>%d{HH:mm:ss} %-5level %-10logger{0} - %msg%n</pattern>
+        </encoder>
+    </appender>
+ 
+    <appender name="LOG-FILE" class="ch.qos.logback.core.FileAppender">
+        <!--<file>SlackBot.log</file>-->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>SackBot.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy
+                class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!-- or whenever the file size reaches 50MB -->
+                <maxFileSize>50MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <!-- keep 10 days' worth of history -->
+            <maxHistory>10</maxHistory>
+        </rollingPolicy>
+    
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %-10logger{10} %msg%n</pattern>
+        </encoder>
+    </appender>
+ 
+    <appender name="ERROR-FILE" class="ch.qos.logback.core.FileAppender">
+        <file>SlackBot.ERROR.log</file>
+        <param name="Append" value="false" />
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+
+        <encoder>
+            <pattern>%d{yyyy-mm-dd HH:mm:ss} %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+ 
+    <!-- Strictly speaking, the level attribute is not necessary since -->
+    <!-- the level of the root level is set to DEBUG by default.       -->
+    <root level="INFO"> 
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="LOG-FILE" />
+        <appender-ref ref="ERROR-FILE" />
+    </root>
+</configuration>

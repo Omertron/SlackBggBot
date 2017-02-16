@@ -62,6 +62,6 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 /target/
-**/application.properties
 /application.properties
 /nbactions.xml
+/*.log
