@@ -60,11 +60,16 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         commands.clear();
         commands.add("quit");
+        commands.add("restart");
 
-        // <(.+?)>(?:\W+)(help|quit)(?:\W*+)(.*)
-        regex = new StringBuilder("(?i)<(.+?)>(?:\\W+)(")
+        // (?:<.+?>\W+|\[\[){1}?(quit|restart)(.*?)(?:\]\])?$
+        regex = new StringBuilder("(?:<.+?>\\W+|")
+                .append("\\").append(DELIM_LEFT).append("\\").append(DELIM_LEFT)
+                .append("){1}?(")
                 .append(StringUtils.join(commands, "|"))
-                .append(")(?:\\W*+)(.*)")
+                .append(")(.*?)(?:")
+                .append("\\").append(DELIM_RIGHT).append("\\").append(DELIM_RIGHT)
+                .append(")?$")
                 .toString();
 
         LOG.info("Admin Pattern: {}", regex);
@@ -84,10 +89,10 @@ public class BoardGameListener implements SlackMessagePostedListener {
         }
 
         // Search for a user commnd pattern
-        Matcher m = PAT_COMMAND.matcher(msgContent);
-        if (m.matches()) {
-            String command = m.group(1).toUpperCase();
-            String query = m.group(2);
+        Matcher mCmd = PAT_COMMAND.matcher(msgContent);
+        if (mCmd.matches()) {
+            String command = mCmd.group(1).toUpperCase();
+            String query = mCmd.group(2);
 
             LOG.info("Command '{}', query '{}'", command, query);
 
@@ -115,17 +120,21 @@ public class BoardGameListener implements SlackMessagePostedListener {
         }
 
         // Search for a direct command pattern
-        Matcher m2 = PAT_ADMIN.matcher(msgContent);
-        if (m2.matches()) {
-            String command = m2.group(2).toUpperCase();
-            String params = m2.group(3);
+        Matcher mAdmin = PAT_ADMIN.matcher(msgContent);
+        if (mAdmin.matches()) {
+            String command = mAdmin.group(1).toUpperCase();
+            String params = mAdmin.group(2);
 
             if (msgSender.isAdmin()) {
                 LOG.info("Command '{}' recieved from '{}' ({}) with params '{}'", command, msgSender.getUserName(), msgSender.getId(), params);
                 switch (command) {
                     case "QUIT":
-//                        session.sendMessageToUser(msgSender, "Bot shut down", null);
+                        session.sendMessage(msgChannel, "Bot will now quit.\nGoodbye!");
                         System.exit(0);
+                        break;
+                    case "RESTART":
+                        session.sendMessage(msgChannel, "Bot will now attempt to restart.\nSee you soon!");
+                        System.exit(1);
                         break;
                     default:
                         LOG.info("Unknown command '{}' received from {}", command, msgSender.getUserName());
