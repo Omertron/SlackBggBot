@@ -1,4 +1,4 @@
-package com.omertron.slackbot.actions;
+package com.omertron.sample.actions;
 
 import com.ullink.slack.simpleslackapi.*;
 import com.ullink.slack.simpleslackapi.replies.SlackChannelReply;

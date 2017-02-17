@@ -1,4 +1,4 @@
-package com.omertron.slackbot.listeners;
+package com.omertron.sample.listeners;
 
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackSession;
