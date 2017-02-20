@@ -19,8 +19,10 @@
  */
 package com.omertron.slackbot.listeners;
 
+import com.omertron.slackbot.Constants;
 import static com.omertron.slackbot.Constants.DELIM_LEFT;
 import static com.omertron.slackbot.Constants.DELIM_RIGHT;
+import com.omertron.slackbot.utils.GitRepositoryState;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackSession;
@@ -43,11 +45,12 @@ public class HelpListener implements SlackMessagePostedListener {
     private static final List<HelpInfo> INFO = new ArrayList<>();
     private static final Pattern PAT_HELP;
     private static SlackAttachment helpMessage = null;
+    private static SlackAttachment aboutMessage = null;
 
     static {
         String regex = new StringBuilder("(?i)")
                 .append("\\").append(DELIM_LEFT).append("\\").append(DELIM_LEFT)
-                .append("(help)(?:\\W*)(.*)")
+                .append("(help|about)(?:\\W*)(.*)")
                 .append("\\").append(DELIM_RIGHT).append("\\").append(DELIM_RIGHT)
                 .toString();
 
@@ -82,7 +85,17 @@ public class HelpListener implements SlackMessagePostedListener {
         // Search for a user commnd pattern
         Matcher m = PAT_HELP.matcher(msgContent);
         if (m.matches()) {
-            session.sendMessage(msgChannel, "", getHelpMessage());
+            String command = m.group(1).toUpperCase();
+            switch (command) {
+                case "HELP":
+                    session.sendMessage(msgChannel, "", getHelpMessage());
+                    break;
+                case "ABOUT":
+                    session.sendMessage(msgChannel, "", getAboutMessage());
+                    break;
+                default:
+                    LOG.warn("Unknown command recieved: '{}'", command);
+            }
         }
     }
 
@@ -110,7 +123,8 @@ public class HelpListener implements SlackMessagePostedListener {
 
     /**
      * Format the help commands as an attachment
-     * @return 
+     *
+     * @return
      */
     private SlackAttachment getHelpMessage() {
         if (helpMessage == null) {
@@ -127,5 +141,30 @@ public class HelpListener implements SlackMessagePostedListener {
         }
 
         return helpMessage;
+    }
+
+    private SlackAttachment getAboutMessage() {
+        if (aboutMessage == null) {
+            GitRepositoryState grs = new GitRepositoryState();
+
+            aboutMessage = new SlackAttachment();
+
+            aboutMessage.setFallback("Information about the bot");
+            aboutMessage.setPretext("Information about this bot:");
+//            aboutMessage.addMarkdownIn("fields");
+            aboutMessage.setColor("good");
+
+            aboutMessage.addField("Name", Constants.BOT_NAME, true);
+            aboutMessage.addField("Version", Constants.BOT_VERSION, true);
+            aboutMessage.addField("Author", "Stuart Boston (Omertron)", true);
+
+            aboutMessage.addField("Build Version", grs.getBuildVersion(), true);
+            aboutMessage.addField("Commit ID", grs.getCommitIdAbbrev(), true);
+            aboutMessage.addField("Commit Time", grs.getCommitTime(), false);
+            aboutMessage.addField("Build Time", grs.getBuildTime(), false);
+            aboutMessage.addField("Commit Message", grs.getCommitMessageFull(), false);
+        }
+
+        return aboutMessage;
     }
 }
