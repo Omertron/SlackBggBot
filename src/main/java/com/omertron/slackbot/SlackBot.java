@@ -23,9 +23,14 @@ import com.omertron.slackbot.listeners.BoardGameListener;
 import com.omertron.slackbot.listeners.HelpListener;
 import com.omertron.slackbot.utils.PropertyUtils;
 import com.ullink.slack.simpleslackapi.SlackSession;
+import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory;
 import java.net.Proxy;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
+import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +57,8 @@ public class SlackBot {
         }
 
         session.connect();
+        // Notify admins
+        notifyStartup(session);
         // Add board game listner
         session.addMessagePostedListener(new BoardGameListener());
         // Add help listener
@@ -64,4 +71,16 @@ public class SlackBot {
         Thread.sleep(Long.MAX_VALUE);
     }
 
+    private static void notifyStartup(SlackSession session) {
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        df.setTimeZone(tz);
+
+        for (SlackUser u : session.getUsers()) {
+            LOG.info("{} - {}", u.getUserName(), u.isAdmin());
+            if (u.isAdmin() && u.getUserName().toLowerCase().equals("omertron")) {
+                session.sendMessageToUser(u, Constants.BOT_NAME + " started at " + df.format(new Date()), null);
+            }
+        }
+    }
 }
