@@ -12,7 +12,7 @@
     </appender>
  
     <appender name="LOG-FILE" class="ch.qos.logback.core.FileAppender">
-        <!--<file>SlackBot.log</file>-->
+        <file>SlackBot.log</file>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>DEBUG</level>
         </filter>
