@@ -150,11 +150,11 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 LOG.info("Command '{}' recieved from '{}' ({}) with params '{}'", command, msgSender.getUserName(), msgSender.getId(), params);
                 switch (command) {
                     case "QUIT":
-                        session.sendMessage(msgChannel, "Bot will now quit.\nGoodbye!");
+                        session.sendMessage(msgChannel, "Bot will now quit :disappointed:");
                         System.exit(0);
                         break;
                     case "RESTART":
-                        session.sendMessage(msgChannel, "Bot will now attempt to restart.\nSee you soon!");
+                        session.sendMessage(msgChannel, "Bot will now attempt to restart :relieved:");
                         System.exit(1);
                         break;
                     default:
@@ -425,13 +425,20 @@ public class BoardGameListener implements SlackMessagePostedListener {
      * @return
      */
     private SlackAttachment makeSimpleAttachment(Thing game) {
-        String year = game.getYearPublished() == null ? " (Unknown)" : " (" + game.getYearPublished() + ")";
+        StringBuilder nameFormatted = new StringBuilder(game.getName());
+        if (game.getYearPublished() == null) {
+            nameFormatted.append(" (Unknown)");
+        } else {
+            nameFormatted.append(" (").append(game.getYearPublished()).append(")");
+        }
+        nameFormatted.append(" ID: ").append(game.getId());
 
         SlackAttachment sa = new SlackAttachment();
         sa.setFallback("Information on " + game.getPrimaryName());
-        sa.setAuthorName(game.getName() + year);
-        sa.setAuthorLink(Constants.BGG_GAME_LINK + game.getId());
+        sa.setTitle(nameFormatted.toString());
+        sa.setTitleLink(Constants.BGG_GAME_LINK + game.getId());
         sa.setColor("good");
+
         return sa;
     }
 
