@@ -59,10 +59,10 @@ public class BoardGameListener implements SlackMessagePostedListener {
     static {
         List<String> commands = new ArrayList<>();
         commands.add("search");
-        HelpListener.addHelpMessage("search", "game name", "Search for games called *{game name}*.\nThis does not need to be the exact name of the game.");
+        HelpListener.addHelpMessage("search", "game name", "Search for games called *<game name>*.\nThis does not need to be the exact name of the game.");
         commands.add("game");
-        HelpListener.addHelpMessage("game", "game title", "Get information about *{game title}*.\nThis must be the exact name of the game as per BGG.");
-        HelpListener.addHelpMessage("game", "BGG ID", "Get information about the game with this *{BGG ID}*.");
+        HelpListener.addHelpMessage("game", "game title", "Get information about *<game title>*.\nThis must be the exact name of the game as per BGG.");
+        HelpListener.addHelpMessage("game", "BGG ID", "Get information about the game with this *<BGG ID>*.");
         commands.add("user");
         HelpListener.addHelpMessage("user", "username", "Get information on a BGG user.");
         commands.add("coll");
@@ -79,7 +79,9 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         commands.clear();
         commands.add("quit");
+        HelpListener.addHelpMessage("quit", "", "Shutdown the bot.\nNote the bot will need to be manually restarted", true);
         commands.add("restart");
+        HelpListener.addHelpMessage("restart", "", "Shutdown and restart the bot.\nThis is used to upgrade the bot to the latest version", true);
 
         // (?:<.+?>\W+|\[\[){1}?(quit|restart)(.*?)(?:\]\])?$
         regex = new StringBuilder("(?:<.+?>\\W+|")

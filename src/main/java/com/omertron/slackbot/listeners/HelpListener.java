@@ -22,16 +22,20 @@ package com.omertron.slackbot.listeners;
 import com.omertron.slackbot.Constants;
 import static com.omertron.slackbot.Constants.DELIM_LEFT;
 import static com.omertron.slackbot.Constants.DELIM_RIGHT;
+import com.omertron.slackbot.SlackBot;
+import com.omertron.slackbot.model.HelpInfo;
 import com.omertron.slackbot.utils.GitRepositoryState;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackSession;
+import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
 import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,12 +49,20 @@ public class HelpListener implements SlackMessagePostedListener {
     private static final List<HelpInfo> INFO = new ArrayList<>();
     private static final Pattern PAT_HELP;
     private static SlackAttachment helpMessage = null;
+    private static SlackAttachment helpMessageAdmin = null;
     private static SlackAttachment aboutMessage = null;
 
     static {
+        List<String> commands = new ArrayList<>();
+        commands.add("help");
+        commands.add("about");
+        addHelpMessage("about", "", "Get information about the bot", false);
+        commands.add("stats");
+        addHelpMessage("stats", "", "Get some stats about the bot", false);
+
         String regex = new StringBuilder("(?i)")
                 .append("\\").append(DELIM_LEFT).append("\\").append(DELIM_LEFT)
-                .append("(help|about)(?:\\W*)(.*)")
+                .append("(").append(StringUtils.join(commands, "|")).append(")(?:\\W*)(.*)")
                 .append("\\").append(DELIM_RIGHT).append("\\").append(DELIM_RIGHT)
                 .toString();
 
@@ -58,24 +70,12 @@ public class HelpListener implements SlackMessagePostedListener {
         PAT_HELP = Pattern.compile(regex);
     }
 
-    static class HelpInfo {
-
-        String command;
-        String param;
-        String message;
-
-        public HelpInfo(String command, String param, String message) {
-            this.command = command;
-            this.param = param;
-            this.message = message;
-        }
-    }
-
     @Override
     public void onEvent(SlackMessagePosted event, SlackSession session) {
         // Channel On Which Message Was Posted
         SlackChannel msgChannel = event.getChannel();
         String msgContent = event.getMessageContent();
+        SlackUser sender = event.getSender();
 
         // Filter out the bot's own messages
         if (session.sessionPersona().getId().equals(event.getSender().getId())) {
@@ -89,9 +89,16 @@ public class HelpListener implements SlackMessagePostedListener {
             switch (command) {
                 case "HELP":
                     session.sendMessage(msgChannel, "", getHelpMessage());
+
+                    if (SlackBot.isBotAdmin(sender)) {
+                        session.sendMessageToUser(sender, "", getHelpMessageAdmin());
+                    }
                     break;
                 case "ABOUT":
                     session.sendMessage(msgChannel, "", getAboutMessage());
+                    break;
+                case "STATS":
+                    session.sendMessage(msgChannel, "Sorry, not implemented yet!");
                     break;
                 default:
                     LOG.warn("Unknown command recieved: '{}'", command);
@@ -102,23 +109,36 @@ public class HelpListener implements SlackMessagePostedListener {
     /**
      * Add a help message to the list
      *
-     * @param command
-     * @param message
+     * @param command The command word itself
+     * @param message The description of the command
      */
     public static void addHelpMessage(String command, String message) {
-        addHelpMessage(command, "", message);
+        addHelpMessage(command, "", message, false);
     }
 
     /**
      * Add a help message to the list with parameters
      *
-     * @param command
-     * @param param
-     * @param message
+     * @param command The command word itself
+     * @param param Any parameters for the command
+     * @param message The description of the command
      */
     public static void addHelpMessage(String command, String param, String message) {
         helpMessage = null;
-        INFO.add(new HelpInfo(command, param, message));
+        INFO.add(new HelpInfo(command, param, message, false));
+    }
+
+    /**
+     * Add a help message to the list
+     *
+     * @param command The command word itself
+     * @param param Any parameters for the command
+     * @param message The description of the command
+     * @param adminOnly Is this command for BOT admins only?
+     */
+    public static void addHelpMessage(String command, String param, String message, boolean adminOnly) {
+        helpMessage = null;
+        INFO.add(new HelpInfo(command, param, message, adminOnly));
     }
 
     /**
@@ -136,13 +156,44 @@ public class HelpListener implements SlackMessagePostedListener {
             helpMessage.setColor("good");
 
             for (HelpInfo hi : INFO) {
-                helpMessage.addField(String.format("%1$s <%2$s>", hi.command, hi.param), hi.message, false);
+                if (!hi.isAdmin()) {
+                    helpMessage.addField(hi.getFormattedCommand(), hi.getMessage(), false);
+                }
             }
         }
 
         return helpMessage;
     }
 
+    /**
+     * Format the help commands as an attachment
+     *
+     * @return
+     */
+    private SlackAttachment getHelpMessageAdmin() {
+        if (helpMessageAdmin == null) {
+            helpMessageAdmin = new SlackAttachment();
+
+            helpMessageAdmin.setFallback("Help commads for admins of the bot");
+            helpMessageAdmin.setPretext("The following admin commands are available from the game bot");
+            helpMessageAdmin.addMarkdownIn("fields");
+            helpMessageAdmin.setColor("good");
+
+            for (HelpInfo hi : INFO) {
+                if (hi.isAdmin()) {
+                    helpMessageAdmin.addField(hi.getFormattedCommand(), hi.getMessage(), false);
+                }
+            }
+        }
+
+        return helpMessageAdmin;
+    }
+
+    /**
+     * Generate the about message
+     *
+     * @return
+     */
     private SlackAttachment getAboutMessage() {
         if (aboutMessage == null) {
             GitRepositoryState grs = new GitRepositoryState();
@@ -151,7 +202,6 @@ public class HelpListener implements SlackMessagePostedListener {
 
             aboutMessage.setFallback("Information about the bot");
             aboutMessage.setPretext("Information about this bot:");
-//            aboutMessage.addMarkdownIn("fields");
             aboutMessage.setColor("good");
 
             aboutMessage.addField("Name", Constants.BOT_NAME, true);

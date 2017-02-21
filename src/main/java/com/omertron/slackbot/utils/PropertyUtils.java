@@ -60,6 +60,8 @@ public class PropertyUtils {
                 props.setProperty(Constants.BOT_TOKEN, "slack-bot-token-here");
                 props.setProperty(Constants.PROXY_HOST, "");
                 props.setProperty(Constants.PROXY_PORT, "");
+                props.setProperty(Constants.BOT_TEST, Boolean.FALSE.toString());
+                props.setProperty(Constants.BOT_ADMINS, "List of usernames for the bot to pay attention to (can be non-admins)");
 
                 saveProperties(props, f, "Properties file for Slack Bot");
                 throw new FileNotFoundException("Property file '" + f.getAbsolutePath() + "' was created, please edit it and re-run");

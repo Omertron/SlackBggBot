@@ -24,6 +24,9 @@ public interface Constants {
     // Bot information
     String BOT_NAME = "BGG Slack Bot";
     String BOT_VERSION = "1.0";
+    // Bot config properties
+    String BOT_TEST = "botTest";
+    String BOT_ADMINS="botAdmins";
 
     // Slack Auth Token property name for property file
     String BOT_TOKEN = "botToken";

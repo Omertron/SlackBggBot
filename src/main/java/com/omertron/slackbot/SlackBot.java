@@ -28,7 +28,9 @@ import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory;
 import java.net.Proxy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
@@ -40,9 +42,12 @@ public class SlackBot {
     private static final Logger LOG = LoggerFactory.getLogger(SlackBot.class);
     private static final Properties PROPS = new Properties();
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
+    private static final List<String> BOT_ADMINS = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         LOG.info("Starting {} v{} ...", Constants.BOT_NAME, Constants.BOT_VERSION);
+
+        // Load the properties
         PropertyUtils.initProperties(PROPS, DEFAULT_PROPERTIES_FILE);
 
         LOG.info("Starting session...");
@@ -57,7 +62,9 @@ public class SlackBot {
         }
 
         session.connect();
-        // Notify admins
+        // Populate the BOT admins
+        populateBotAdmins(session);
+        // Notify BOT admins
         notifyStartup(session);
         // Add board game listner
         session.addMessagePostedListener(new BoardGameListener());
@@ -67,20 +74,86 @@ public class SlackBot {
         LOG.info("Session connected: {}", session.isConnected());
         LOG.info("  Connected to {} ({})", session.getTeam().getName(), session.getTeam().getId());
         LOG.info("  Found {} channels and {} users", session.getChannels().size(), session.getUsers().size());
+        switch (BOT_ADMINS.size()) {
+            case 0:
+                LOG.warn("  There are no BOT Admins found! Please add at least 1 in the properties file!");
+                LOG.warn("  User the property '{}' to add them", Constants.BOT_ADMINS);
+                break;
+            case 1:
+                LOG.info("  There is 1 BOT admin: {}", StringUtils.join(BOT_ADMINS, ","));
+                break;
+            default:
+                LOG.info("  There are {} BOT admins: {}", BOT_ADMINS.size(), StringUtils.join(BOT_ADMINS, ","));
+        }
 
         Thread.sleep(Long.MAX_VALUE);
     }
 
+    /**
+     * Send a start up message to all BOT admins to inform them of the bot's
+     * restart
+     *
+     * @param session
+     */
     private static void notifyStartup(SlackSession session) {
         TimeZone tz = TimeZone.getTimeZone("UTC");
         DateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
         df.setTimeZone(tz);
 
-        for (SlackUser u : session.getUsers()) {
-            LOG.info("{} - {}", u.getUserName(), u.isAdmin());
-            if (u.isAdmin() && u.getUserName().toLowerCase().equals("omertron")) {
-                session.sendMessageToUser(u, Constants.BOT_NAME + " started at " + df.format(new Date()), null);
+        String message = Constants.BOT_NAME + " started at " + df.format(new Date());
+        LOG.info("  {}", message);
+
+        for (String username : BOT_ADMINS) {
+            SlackUser user = session.findUserByUserName(username);
+            if (user != null) {
+                session.sendMessageToUser(user, message, null);
+            } else {
+                LOG.warn("  Admin user '{}' was not found.", username);
             }
         }
+    }
+
+    /**
+     * Populate the list of BOT Administrators from the property file.
+     *
+     * @param session
+     */
+    private static void populateBotAdmins(SlackSession session) {
+        String users = PROPS.getProperty(Constants.BOT_ADMINS, "");
+
+        if (StringUtils.isNotBlank(users)) {
+            SlackUser sUser;
+            for (String user : StringUtils.split(users, ",")) {
+                sUser = session.findUserByUserName(StringUtils.trimToEmpty(user));
+                if (sUser != null) {
+                    LOG.info("Adding {} ({}) to {} admins", sUser.getUserName(), sUser.getRealName(), Constants.BOT_NAME);
+                    // Add the uername to the list
+                    BOT_ADMINS.add(sUser.getUserName());
+                } else {
+                    LOG.warn("Username '{}' was not found in the list of slack users!", user);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Determine if the username is one of the BOT administrators
+     *
+     * @param username
+     * @return
+     */
+    public static boolean isBotAdmin(String username) {
+        return BOT_ADMINS.contains(username);
+    }
+
+    /**
+     * Determine if the user is one of the BOT administrators
+     *
+     * @param user
+     * @return
+     */
+    public static boolean isBotAdmin(SlackUser user) {
+        return BOT_ADMINS.contains(user.getUserName());
     }
 }
