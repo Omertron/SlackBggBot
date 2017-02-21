@@ -307,7 +307,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         SlackAttachment sa = new SlackAttachment();
         sa.setFallback("User information on " + username);
         sa.setAuthorName(StringUtils.joinWith(" ", result.getFirstName(), result.getLastName()));
-        sa.setAuthorLink("https://boardgamegeek.com/user/" + result.getName());
+        sa.setAuthorLink(Constants.BGG_USER_LINK + result.getName());
         sa.setAuthorIcon(formatHttpLink(result.getAvatarLink()));
         sa.setColor("good");
         sa.addField("Year Registered", "" + result.getYearRegistered(), true);
@@ -381,7 +381,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         SlackAttachment sa = new SlackAttachment();
         sa.setFallback(username + "'s collection - part " + partCount + " of " + totalParts);
         sa.setAuthorName(username + "'s collection - part " + partCount + " of " + totalParts);
-        sa.setAuthorLink("https://boardgamegeek.com/collection/user/" + username);
+        sa.setAuthorLink(Constants.BGG_COLL_LINK + username);
         sa.setColor("good");
 
         List<SlackAttachment> collList = new ArrayList<>();
@@ -399,13 +399,14 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 partCount++;
                 sa.setFallback(username + "'s collection - part " + partCount + " of " + totalParts);
                 sa.setAuthorName(username + "'s collection - part " + partCount + " of " + totalParts);
-                sa.setAuthorLink("https://boardgamegeek.com/collection/user/" + username);
+                sa.setAuthorLink(Constants.BGG_COLL_LINK + username);
                 sa.setColor("good");
             }
 
-            sb.append(String.format("%1$s (%2$s) - <https://boardgamegeek.com/boardgame/%3$d|%3$d>\n",
+            sb.append(String.format("%1$s (%2$s) - <%3$s%4$d|%4$d>\n",
                     item.getName(),
                     item.getYearPublished(),
+                    Constants.BGG_GAME_LINK,
                     item.getObjectId()));
         }
         sa.setText(sb.toString());

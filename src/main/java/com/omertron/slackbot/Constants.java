@@ -26,7 +26,7 @@ public interface Constants {
     String BOT_VERSION = "1.0";
     // Bot config properties
     String BOT_TEST = "botTest";
-    String BOT_ADMINS="botAdmins";
+    String BOT_ADMINS = "botAdmins";
 
     // Slack Auth Token property name for property file
     String BOT_TOKEN = "botToken";
@@ -37,6 +37,8 @@ public interface Constants {
 
     // BGG Stuff
     String BGG_GAME_LINK = "https://boardgamegeek.com/boardgame/";
+    String BGG_USER_LINK = "https://boardgamegeek.com/user/";
+    String BGG_COLL_LINK = "https://boardgamegeek.com/collection/user/";
     String DELIM_LEFT = "[";
     String DELIM_RIGHT = "]";
 

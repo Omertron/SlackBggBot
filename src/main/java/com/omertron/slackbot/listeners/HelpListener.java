@@ -204,11 +204,14 @@ public class HelpListener implements SlackMessagePostedListener {
             aboutMessage.setPretext("Information about this bot:");
             aboutMessage.setColor("good");
 
-            aboutMessage.addField("Name", Constants.BOT_NAME, true);
-            aboutMessage.addField("Version", Constants.BOT_VERSION, true);
-            aboutMessage.addField("Author", "Stuart Boston (Omertron)", true);
+            aboutMessage.setTitle(Constants.BOT_NAME);
+            aboutMessage.setTitleLink("https://boardgamegeek.com/");
+            aboutMessage.setThumbUrl("https://cf.geekdo-static.com/images/geekdo/bgg_cornerlogo.png");
 
-            aboutMessage.addField("Build Version", grs.getBuildVersion(), true);
+            aboutMessage.addField("Bot Version", Constants.BOT_VERSION, true);
+            aboutMessage.addField("Author", "Stuart Boston (<" + Constants.BGG_USER_LINK + "Omertron|Omertron>)", true);
+
+            aboutMessage.addField("Build Version", "<https://github.com/Omertron/SlackBggBot|" + grs.getBuildVersion() + ">", true);
             aboutMessage.addField("Commit ID", grs.getCommitIdAbbrev(), true);
             aboutMessage.addField("Commit Time", grs.getCommitTime(), false);
             aboutMessage.addField("Build Time", grs.getBuildTime(), false);
