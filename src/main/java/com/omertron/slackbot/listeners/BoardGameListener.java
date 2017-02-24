@@ -26,6 +26,7 @@ import com.omertron.bgg.model.BoardGameExtended;
 import com.omertron.bgg.model.CollectionItem;
 import com.omertron.bgg.model.CollectionItemWrapper;
 import com.omertron.bgg.model.IdValue;
+import com.omertron.bgg.model.OwnerStatus;
 import com.omertron.bgg.model.RankedList;
 import com.omertron.bgg.model.SearchWrapper;
 import com.omertron.bgg.model.Thing;
@@ -55,6 +56,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
     private static final BggApi BGG = new BggApi();
     private static final Pattern PAT_COMMAND;
     private static final Pattern PAT_ADMIN;
+    private static final Pattern PAT_COLL_PARAM = Pattern.compile("^(\\w*)(\\s(.+))?$");
 
     static {
         List<String> commands = new ArrayList<>();
@@ -167,8 +169,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
     }
 
     /**
-     * Add a reaction to the message that called us and send the "typing..."
-     * indicator
+     * Add a reaction to the message that called us and send the "typing..." indicator
      *
      * @param session
      * @param msgChannel
@@ -351,14 +352,41 @@ public class BoardGameListener implements SlackMessagePostedListener {
      *
      * @param session
      * @param msgChannel
-     * @param username
+     * @param params
      */
-    private void commandCollection(SlackSession session, SlackChannel msgChannel, String username) {
+    private void commandCollection(SlackSession session, SlackChannel msgChannel, String params) {
+        LOG.info("Getting collection information, params: '{}'", params);
+        // Split the parameters out (if multiple)
+        String username;
+        String ids;
+        Matcher m = PAT_COLL_PARAM.matcher(params);
+        if (m.matches()) {
+            username = m.group(1);
+            ids = StringUtils.trimToNull(m.group(2));
+        } else {
+            username = params;
+            ids = null;
+        }
+
+        LOG.info("  Username: '{}'", username);
+        if (ids != null) {
+            LOG.info("  ID(s): '{}'", ids);
+        }
+
         CollectionItemWrapper result;
         try {
             List<IncludeExclude> includes = new ArrayList<>();
-            includes.add(IncludeExclude.OWN);
-            result = BGG.getCollectionInfo(username, null, includes, null);
+
+            if (ids == null) {
+                // Just get the username's owned collection
+                includes.add(IncludeExclude.OWN);
+            } else {
+                // Get the individual ID items
+                includes.add(IncludeExclude.STATS);
+            }
+
+            LOG.info("Getting collection information for '{}' with IDs '{}' & includes '{}'", username, ids, includes);
+            result = BGG.getCollectionInfo(username, ids, includes, null);
         } catch (BggException ex) {
             LOG.warn("Failed to get collection for user '{}'", username, ex);
             session.sendMessage(msgChannel, "Failed to get collection for user " + username);
@@ -366,15 +394,49 @@ public class BoardGameListener implements SlackMessagePostedListener {
         }
 
         if (result.getTotalItems() == 0) {
-            session.sendMessage(msgChannel, "No information found for username '" + username + "'");
+            String message = "No information found for username '" + username + "'";
+            if (ids != null) {
+                message += " with IDs '" + ids + "'";
+            }
+            session.sendMessage(msgChannel, message);
             return;
+        } else {
+            LOG.info("Found {} collection items for {}", result.getTotalItems(), username);
         }
 
-        int total = result.getTotalItems();
+        List<SlackAttachment> collList;
+        if (ids == null) {
+            LOG.info("Creating simple collection");
+            collList = createSimpleCollection(session, msgChannel, result.getItems(), username);
+        } else {
+            LOG.info("Creating detailed collection");
+            collList = createDetailedCollection(session, msgChannel, result.getItems(), username);
+        }
+
+        SlackPreparedMessage spm = new SlackPreparedMessage.Builder()
+                .withUnfurl(false)
+                .addAttachments(collList)
+                .build();
+        session.sendMessage(msgChannel, spm);
+    }
+
+    /**
+     * Create a simple list of the collection items
+     *
+     * @param session
+     * @param msgChannel
+     * @param result
+     * @param username
+     * @return
+     */
+    private List<SlackAttachment> createSimpleCollection(SlackSession session, SlackChannel msgChannel, List<CollectionItem> result, String username) {
+        int total = result.size();
         int perPart = 75;
         int totalParts = (total + perPart - 1) / perPart;
         int count = 0;
         int partCount = 1;
+
+        LOG.info("\tMaking simple collection for {} with {} items and page size {}", username, total, perPart);
 
         session.sendMessage(msgChannel, username + " has " + total + " items in their collection. There will be " + totalParts + " parts listed.");
 
@@ -387,7 +449,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         List<SlackAttachment> collList = new ArrayList<>();
 
         StringBuilder sb = new StringBuilder();
-        for (CollectionItem item : result.getItems()) {
+        for (CollectionItem item : result) {
             count++;
             if (count >= perPart) {
                 sa.setText(sb.toString());
@@ -412,11 +474,71 @@ public class BoardGameListener implements SlackMessagePostedListener {
         sa.setText(sb.toString());
         collList.add(sa);
 
-        SlackPreparedMessage spm = new SlackPreparedMessage.Builder()
-                .withUnfurl(false)
-                .addAttachments(collList)
-                .build();
-        session.sendMessage(msgChannel, spm);
+        LOG.info("\tCollection size of {} items and {} parts", result.size(), collList.size());
+        return collList;
+    }
+
+    private List<SlackAttachment> createDetailedCollection(SlackSession session, SlackChannel msgChannel, List<CollectionItem> result, String username) {
+        List<SlackAttachment> collList = new ArrayList<>();
+
+        LOG.info("Creating detailed attachments for {} for {} items", username, result.size());
+        SlackAttachment sa;
+        for (CollectionItem game : result) {
+            sa = new SlackAttachment();
+            String year = game.getYearPublished() == null ? " (Unknown)" : " (" + game.getYearPublished() + ")";
+
+            sa.setFallback("Information on " + game.getName());
+            sa.setTitle(game.getName() + year);
+            sa.setTitleLink(Constants.BGG_GAME_LINK + game.getObjectId());
+            sa.setAuthorIcon(game.getThumbnail());
+            sa.setText(game.getComment());
+            sa.setColor("good");
+            sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
+            sa.addField("BGG ID", String.valueOf(game.getObjectId()), true);
+            if (game.getStats() != null && game.getStats().getRating() != null) {
+                float value = game.getStats().getRating().getValue();
+                sa.addField("Rating", "" + (value > 0 ? value : "Not Rated"), true);
+            }
+
+            if (game.getNumPlays() > 0) {
+                sa.addField("Num Plays", "" + game.getNumPlays(), true);
+            }
+
+            if (game.getOwnerStatus() != null) {
+                OwnerStatus os = game.getOwnerStatus();
+                List<String> status = new ArrayList<>();
+
+                if (os.isOwn()) {
+                    status.add("Own");
+                }
+                if (os.isForTrade()) {
+                    status.add("For Trade");
+                }
+                if (os.isPreordered()) {
+                    status.add("Pre-ordered");
+                }
+                if (os.isPreviouslyOwned()) {
+                    status.add("Prev Owned");
+                }
+                if (os.isWant()) {
+                    status.add("Wanted");
+                }
+                if (os.isWantToBuy()) {
+                    status.add("Want To Buy");
+                }
+                if (os.isWantToPlay()) {
+                    status.add("Want To Play");
+                }
+
+                if (!status.isEmpty()) {
+                    sa.addField("Owner Status", StringUtils.join(status, ","), true);
+                }
+            }
+
+            collList.add(sa);
+        }
+
+        return collList;
     }
 
     /**
@@ -462,7 +584,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
         sa.addField("BGG ID", String.valueOf(game.getId()), true);
         sa.addField("Player Count", game.getMinPlayers() + "-" + game.getMaxPlayers(), true);
-        sa.addField("Playing Time", String.valueOf(game.getPlayingtime()), true);
+        sa.addField("Playing Time", String.valueOf(game.getPlayingTime()), true);
         sa.addField("Designer(s)", formatIdValue(game.getBoardGameDesigner()), true);
         sa.addField("Categories", formatIdValue(game.getBoardGameCategory()), true);
         sa.addField("Mechanics", formatIdValue(game.getBoardGameMechanic()), true);
