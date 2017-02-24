@@ -151,7 +151,14 @@ public class HelpListener implements SlackMessagePostedListener {
             helpMessage = new SlackAttachment();
 
             helpMessage.setFallback("Help commads for the bot");
-            helpMessage.setPretext("The following commands are available from the game bot");
+
+            StringBuilder text = new StringBuilder("The following commands are available from the game bot.\n");
+            text.append("Surroung the entire command including any parameters with ")
+                    .append(Constants.DELIM_LEFT).append(Constants.DELIM_LEFT)
+                    .append(" and ")
+                    .append(Constants.DELIM_RIGHT).append(Constants.DELIM_RIGHT);
+
+            helpMessage.setPretext(text.toString());
             helpMessage.addMarkdownIn("fields");
             helpMessage.setColor("good");
 
@@ -207,6 +214,14 @@ public class HelpListener implements SlackMessagePostedListener {
             aboutMessage.setTitle(Constants.BOT_NAME);
             aboutMessage.setTitleLink("https://boardgamegeek.com/");
             aboutMessage.setThumbUrl("https://cf.geekdo-static.com/images/geekdo/bgg_cornerlogo.png");
+
+            StringBuilder text = new StringBuilder("This is a bot to query Board Game Geek for information on games, users collections and other useful information.\n");
+            text.append("You can access the detailed help information using the command ")
+                    .append(Constants.DELIM_LEFT).append(Constants.DELIM_LEFT)
+                    .append("help")
+                    .append(Constants.DELIM_RIGHT).append(Constants.DELIM_RIGHT).append("\n");
+
+            aboutMessage.setText(text.toString());
 
             aboutMessage.addField("Bot Version", Constants.BOT_VERSION, true);
             aboutMessage.addField("Author", "Stuart Boston (<" + Constants.BGG_USER_LINK + "Omertron|Omertron>)", true);
