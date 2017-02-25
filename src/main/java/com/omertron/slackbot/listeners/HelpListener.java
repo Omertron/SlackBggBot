@@ -33,6 +33,8 @@ import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
 import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -46,7 +48,8 @@ import org.slf4j.LoggerFactory;
 public class HelpListener implements SlackMessagePostedListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(HelpListener.class);
-    private static final List<HelpInfo> INFO = new ArrayList<>();
+
+    private static final Map<Integer, HelpInfo> INFO = new TreeMap<>();
     private static final Pattern PAT_HELP;
     private static SlackAttachment helpMessage = null;
     private static SlackAttachment helpMessageAdmin = null;
@@ -56,9 +59,9 @@ public class HelpListener implements SlackMessagePostedListener {
         List<String> commands = new ArrayList<>();
         commands.add("help");
         commands.add("about");
-        addHelpMessage("about", "", "Get information about the bot", false);
+        addHelpMessage(99, "about", "", "Get information about the bot", false);
         commands.add("stats");
-        addHelpMessage("stats", "", "Get some stats about the bot", false);
+        addHelpMessage(95, "stats", "", "Get some stats about the bot", false);
 
         String regex = new StringBuilder("(?i)")
                 .append("\\").append(DELIM_LEFT).append("\\").append(DELIM_LEFT)
@@ -109,36 +112,39 @@ public class HelpListener implements SlackMessagePostedListener {
     /**
      * Add a help message to the list
      *
+     * @param priority
      * @param command The command word itself
      * @param message The description of the command
      */
-    public static void addHelpMessage(String command, String message) {
-        addHelpMessage(command, "", message, false);
+    public static void addHelpMessage(Integer priority, String command, String message) {
+        addHelpMessage(priority, command, "", message, false);
     }
 
     /**
      * Add a help message to the list with parameters
      *
+     * @param priority
      * @param command The command word itself
      * @param param Any parameters for the command
      * @param message The description of the command
      */
-    public static void addHelpMessage(String command, String param, String message) {
+    public static void addHelpMessage(Integer priority, String command, String param, String message) {
         helpMessage = null;
-        INFO.add(new HelpInfo(command, param, message, false));
+        addHelpMessage(priority, command, param, message, false);
     }
 
     /**
      * Add a help message to the list
      *
+     * @param priority
      * @param command The command word itself
      * @param param Any parameters for the command
      * @param message The description of the command
      * @param adminOnly Is this command for BOT admins only?
      */
-    public static void addHelpMessage(String command, String param, String message, boolean adminOnly) {
+    public static void addHelpMessage(Integer priority, String command, String param, String message, boolean adminOnly) {
         helpMessage = null;
-        INFO.add(new HelpInfo(command, param, message, adminOnly));
+        INFO.put(priority, new HelpInfo(command, param, message, adminOnly));
     }
 
     /**
@@ -162,7 +168,8 @@ public class HelpListener implements SlackMessagePostedListener {
             helpMessage.addMarkdownIn("fields");
             helpMessage.setColor("good");
 
-            for (HelpInfo hi : INFO) {
+            for (Map.Entry<Integer, HelpInfo> entry : INFO.entrySet()) {
+                HelpInfo hi = entry.getValue();
                 if (!hi.isAdmin()) {
                     helpMessage.addField(hi.getFormattedCommand(), hi.getMessage(), false);
                 }
@@ -186,7 +193,8 @@ public class HelpListener implements SlackMessagePostedListener {
             helpMessageAdmin.addMarkdownIn("fields");
             helpMessageAdmin.setColor("good");
 
-            for (HelpInfo hi : INFO) {
+            for (Map.Entry<Integer, HelpInfo> entry : INFO.entrySet()) {
+                HelpInfo hi = entry.getValue();
                 if (hi.isAdmin()) {
                     helpMessageAdmin.addField(hi.getFormattedCommand(), hi.getMessage(), false);
                 }
