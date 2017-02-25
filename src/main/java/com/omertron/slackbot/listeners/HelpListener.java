@@ -112,31 +112,19 @@ public class HelpListener implements SlackMessagePostedListener {
     /**
      * Add a help message to the list
      *
-     * @param priority
+     * @param priority The order that a command should come in the help list
      * @param command The command word itself
      * @param message The description of the command
+     * @param adminOnly
      */
-    public static void addHelpMessage(Integer priority, String command, String message) {
-        addHelpMessage(priority, command, "", message, false);
-    }
-
-    /**
-     * Add a help message to the list with parameters
-     *
-     * @param priority
-     * @param command The command word itself
-     * @param param Any parameters for the command
-     * @param message The description of the command
-     */
-    public static void addHelpMessage(Integer priority, String command, String param, String message) {
-        helpMessage = null;
-        addHelpMessage(priority, command, param, message, false);
+    public static void addHelpMessage(Integer priority, String command, String message, boolean adminOnly) {
+        addHelpMessage(priority, command, "", message, adminOnly);
     }
 
     /**
      * Add a help message to the list
      *
-     * @param priority
+     * @param priority The order that a command should come in the help list
      * @param command The command word itself
      * @param param Any parameters for the command
      * @param message The description of the command
@@ -145,6 +133,20 @@ public class HelpListener implements SlackMessagePostedListener {
     public static void addHelpMessage(Integer priority, String command, String param, String message, boolean adminOnly) {
         helpMessage = null;
         INFO.put(priority, new HelpInfo(command, param, message, adminOnly));
+    }
+
+    /**
+     * Add a help message to the list
+     *
+     * @param priority The order that a command should come in the help list
+     * @param command The command word itself
+     * @param params An ordered list of parameters for the command
+     * @param message The description of the command
+     * @param adminOnly Is this command for BOT admins only?
+     */
+    static void addHelpMessage(Integer priority, String command, String[] params, String message, boolean adminOnly) {
+        helpMessage = null;
+        INFO.put(priority, new HelpInfo(command, params, message, adminOnly));
     }
 
     /**

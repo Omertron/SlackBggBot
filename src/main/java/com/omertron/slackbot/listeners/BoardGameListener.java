@@ -61,14 +61,16 @@ public class BoardGameListener implements SlackMessagePostedListener {
     static {
         List<String> commands = new ArrayList<>();
         commands.add("search");
-        HelpListener.addHelpMessage(10, "search", "game name", "Search for games called *<game name>*.\nThis does not need to be the exact name of the game.");
+        HelpListener.addHelpMessage(10, "search", "game name", "Search for games called *<game name>*.\nThis does not need to be the exact name of the game.", false);
         commands.add("game");
-        HelpListener.addHelpMessage(22, "game", "game title", "Get information about *<game title>*.\nThis must be the exact name of the game as per BGG.");
-        HelpListener.addHelpMessage(20, "game", "BGG ID", "Get information about the game with this *<BGG ID>*.");
+        HelpListener.addHelpMessage(22, "game", "game title", "Get information about *<game title>*.\nThis must be the exact name of the game as per BGG.", false);
+        HelpListener.addHelpMessage(20, "game", "BGG ID", "Get information about the game with this *<BGG ID>*.", false);
         commands.add("user");
-        HelpListener.addHelpMessage(50, "user", "username", "Get information on a BGG user.");
+        HelpListener.addHelpMessage(50, "user", "username", "Get information on a BGG user.", false);
         commands.add("coll");
-        HelpListener.addHelpMessage(40, "coll", "username", "Get a list of the owned games for a BGG user.");
+        HelpListener.addHelpMessage(40, "coll", "username", "Get a list of the owned games for a BGG user.", false);
+        HelpListener.addHelpMessage(41, "coll", new String[]{"username", "ID list"},
+                "Get a list of the owned games for a BGG user that match the ID list.", false);
 
         String regex = new StringBuilder("(?i)")
                 .append("\\").append(DELIM_LEFT).append("\\").append(DELIM_LEFT)

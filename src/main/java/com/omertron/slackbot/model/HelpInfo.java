@@ -19,7 +19,11 @@
  */
 package com.omertron.slackbot.model;
 
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.LoggerFactory;
 
 /**
  * Holds the help information about a bot command
@@ -28,18 +32,25 @@ import org.apache.commons.lang3.StringUtils;
 public class HelpInfo {
 
     private String command;
-    private String param;
+    private List<String> params = new LinkedList<>();
     private String message;
     private boolean admin;
-    private static final String FORMAT_PARAM = "%1$s <%2$s>";
-    private static final String FORMAT_SINGLE = "%1$s";
 
     public HelpInfo() {
     }
 
     public HelpInfo(String command, String param, String message, boolean admin) {
         this.command = command;
-        this.param = param;
+        if (StringUtils.isNotEmpty(param)) {
+            this.params.add(param);
+        }
+        this.message = message;
+        this.admin = admin;
+    }
+
+    public HelpInfo(String command, String[] params, String message, boolean admin) {
+        this.command = command;
+        this.params.addAll(Arrays.asList(params));
         this.message = message;
         this.admin = admin;
     }
@@ -52,12 +63,26 @@ public class HelpInfo {
         this.command = command;
     }
 
-    public String getParam() {
-        return param;
+    public List< String> getParams() {
+        return params;
     }
 
-    public void setParam(String param) {
-        this.param = param;
+    public void setParams(List<String> params) {
+        this.params = params;
+    }
+
+    public void addParam(String param) {
+        this.params.add(param);
+    }
+
+    public void addParam(String[] params) {
+        for (String param : params) {
+            this.params.add(param);
+        }
+    }
+
+    public void addParam(List< String> params) {
+        this.params.addAll(params);
     }
 
     public String getMessage() {
@@ -82,10 +107,15 @@ public class HelpInfo {
      * @return
      */
     public String getFormattedCommand() {
-        if (StringUtils.isBlank(param)) {
-            return String.format(FORMAT_SINGLE, command);
+        LoggerFactory.getLogger("test").info("{}-{}", params.size(), params.isEmpty());
+        if (params.isEmpty()) {
+            return command;
         } else {
-            return String.format(FORMAT_PARAM, command, param);
+            StringBuilder format = new StringBuilder(command);
+            for (String p : params) {
+                format.append(" <").append(p).append(">");
+            }
+            return format.toString();
         }
     }
 }
