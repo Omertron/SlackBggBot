@@ -36,9 +36,19 @@ public class HelpInfo {
     private String message;
     private boolean admin;
 
+    /**
+     * Create an empty HelpInfo object
+     */
     public HelpInfo() {
     }
 
+    /**
+     * Create a HelpInfo object with a single parameter
+     * @param command
+     * @param param
+     * @param message
+     * @param admin 
+     */
     public HelpInfo(String command, String param, String message, boolean admin) {
         this.command = command;
         if (StringUtils.isNotEmpty(param)) {
@@ -48,6 +58,13 @@ public class HelpInfo {
         this.admin = admin;
     }
 
+    /**
+     * Create a HelpInfo object with an array of parameters
+     * @param command
+     * @param params
+     * @param message
+     * @param admin 
+     */
     public HelpInfo(String command, String[] params, String message, boolean admin) {
         this.command = command;
         this.params.addAll(Arrays.asList(params));
