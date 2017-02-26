@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.LoggerFactory;
 
 /**
  * Holds the help information about a bot command
@@ -124,7 +123,6 @@ public class HelpInfo {
      * @return
      */
     public String getFormattedCommand() {
-        LoggerFactory.getLogger("test").info("{}-{}", params.size(), params.isEmpty());
         if (params.isEmpty()) {
             return command;
         } else {
