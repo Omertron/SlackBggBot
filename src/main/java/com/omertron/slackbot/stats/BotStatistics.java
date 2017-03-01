@@ -130,7 +130,7 @@ public final class BotStatistics {
         for (StatHolder stat : STATISTICS.values()) {
             int value = stat.getTotal();
             if (value > 0 || !skipZero) {
-                statOutput.append(stat.formatOutput(true));
+                statOutput.append(stat.formatOutput(detailed));
             }
         }
 
