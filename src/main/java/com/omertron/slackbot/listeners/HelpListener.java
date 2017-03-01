@@ -90,11 +90,11 @@ public class HelpListener implements SlackMessagePostedListener {
         // Search for a user commnd pattern
         Matcher m = PAT_HELP.matcher(msgContent);
         if (m.matches()) {
+            BotStatistics.writeFile();
             String command = m.group(1).toUpperCase();
             switch (command) {
                 case "HELP":
                     BotStatistics.increment(StatCategory.HELP, msgSender.getUserName());
-//                    BotStats.INSTANCE.addStat(StatCategory.HELP, sender.getUserName(), 1);
                     session.sendMessage(msgChannel, "", getHelpMessage());
 
                     if (SlackBot.isBotAdmin(msgSender)) {
@@ -103,15 +103,11 @@ public class HelpListener implements SlackMessagePostedListener {
                     break;
                 case "ABOUT":
                     BotStatistics.increment(StatCategory.ABOUT, msgSender.getUserName());
-//                    BotStats.INSTANCE.addStat(StatCategory.ABOUT, sender.getUserName(), 1);
                     session.sendMessage(msgChannel, "", getAboutMessage());
                     break;
                 case "STATS":
                     BotStatistics.increment(StatCategory.STATS, msgSender.getUserName());
                     String stats = BotStatistics.generateStatistics(true, SlackBot.isBotAdmin(msgSender));
-                    BotStatistics.writeFile();
-//                    BotStats.INSTANCE.addStat(StatCategory.STATS, sender.getUserName(), 1);
-//                    String stats = BotStats.INSTANCE.getFormattedStats();
                     session.sendMessage(msgChannel, stats);
                     break;
                 default:

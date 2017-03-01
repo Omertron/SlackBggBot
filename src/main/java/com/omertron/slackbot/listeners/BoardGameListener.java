@@ -127,25 +127,21 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 case "SEARCH":
                     botUpdateChannel(session, msgChannel, event);
                     BotStatistics.increment(StatCategory.SEARCH, msgSender.getUserName());
-//                    BotStats.INSTANCE.addStat(StatCategory.SEARCH, msgSender.getUserName(), 1);
                     commandSearch(session, msgChannel, query);
                     break;
                 case "GAME":
                     botUpdateChannel(session, msgChannel, event);
                     BotStatistics.increment(StatCategory.GAME, msgSender.getUserName());
-//                    BotStats.INSTANCE.addStat(StatCategory.GAME, msgSender.getUserName(), 1);
                     commandGame(session, msgChannel, query);
                     break;
                 case "USER":
                     botUpdateChannel(session, msgChannel, event);
                     BotStatistics.increment(StatCategory.USER, msgSender.getUserName());
-//                    BotStats.INSTANCE.addStat(StatCategory.USER, msgSender.getUserName(), 1);
                     commandUser(session, msgChannel, query);
                     break;
                 case "COLL":
                     botUpdateChannel(session, msgChannel, event);
                     BotStatistics.increment(StatCategory.COLLECTION, msgSender.getUserName());
-//                    BotStats.INSTANCE.addStat(StatCategory.COLLECTION, msgSender.getUserName(), 1);
                     commandCollection(session, msgChannel, query);
                     break;
                 default:
@@ -162,19 +158,16 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
             if (msgSender.isAdmin()) {
                 LOG.info("Command '{}' recieved from '{}' ({}) with params '{}'", command, msgSender.getUserName(), msgSender.getId(), params);
+                BotStatistics.writeFile();
                 switch (command) {
                     case "QUIT":
                         session.sendMessage(msgChannel, "Bot will now quit :disappointed:");
                         BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
-                        BotStatistics.writeFile();
-//                        BotStats.INSTANCE.addStat(StatCategory.ADMIN, msgSender.getUserName(), 1);
                         System.exit(0);
                         break;
                     case "RESTART":
                         session.sendMessage(msgChannel, "Bot will now attempt to restart :relieved:");
                         BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
-                        BotStatistics.writeFile();
-//                        BotStats.INSTANCE.addStat(StatCategory.ADMIN, msgSender.getUserName(), 1);
                         System.exit(1);
                         break;
                     default:
