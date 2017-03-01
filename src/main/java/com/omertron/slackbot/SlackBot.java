@@ -46,6 +46,10 @@ public class SlackBot {
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
     private static final List<String> BOT_ADMINS = new ArrayList<>();
 
+    private SlackBot() {
+        // No need for a constructor in the main class
+    }
+
     public static void main(String[] args) throws Exception {
         LOG.info("Starting {} v{} ...", Constants.BOT_NAME, Constants.BOT_VERSION);
 

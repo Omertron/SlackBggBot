@@ -21,6 +21,10 @@ package com.omertron.slackbot;
 
 public final class Constants {
 
+    private Constants() {
+        throw new UnsupportedOperationException("Class cannot be instantiated");
+    }
+
     // Bot information
     public static final String BOT_NAME = "BGG Slack Bot";
     public static final String BOT_VERSION = "1.0";

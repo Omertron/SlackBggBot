@@ -40,6 +40,10 @@ public class PropertyUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(PropertyUtils.class);
 
+    private PropertyUtils() {
+        throw new UnsupportedOperationException("Class cannot be instantiated");
+    }
+
     /**
      * Read the properties file, or create it if not found
      *

@@ -59,6 +59,8 @@ public class BoardGameListener implements SlackMessagePostedListener {
     private static final Pattern PAT_COMMAND;
     private static final Pattern PAT_ADMIN;
     private static final Pattern PAT_COLL_PARAM = Pattern.compile("^(\\w*)(\\s(.+))?$");
+    private static final String BGG_ID = "BGG ID";
+    private static final String USERNAME = "username";
 
     static {
         List<String> commands = new ArrayList<>();
@@ -66,12 +68,12 @@ public class BoardGameListener implements SlackMessagePostedListener {
         HelpListener.addHelpMessage(10, "search", "game name", "Search for games called *<game name>*.\nThis does not need to be the exact name of the game.", false);
         commands.add("game");
         HelpListener.addHelpMessage(22, "game", "game title", "Get information about *<game title>*.\nThis must be the exact name of the game as per BGG.", false);
-        HelpListener.addHelpMessage(20, "game", "BGG ID", "Get information about the game with this *<BGG ID>*.", false);
+        HelpListener.addHelpMessage(20, "game", BGG_ID, "Get information about the game with this *<BGG ID>*.", false);
         commands.add("user");
-        HelpListener.addHelpMessage(50, "user", "username", "Get information on a BGG user.", false);
+        HelpListener.addHelpMessage(50, "user", USERNAME, "Get information on a BGG user.", false);
         commands.add("coll");
-        HelpListener.addHelpMessage(40, "coll", "username", "Get a list of the owned games for a BGG user.", false);
-        HelpListener.addHelpMessage(41, "coll", new String[]{"username", "ID list"},
+        HelpListener.addHelpMessage(40, "coll", USERNAME, "Get a list of the owned games for a BGG user.", false);
+        HelpListener.addHelpMessage(41, "coll", new String[]{USERNAME, "ID list"},
                 "Get a list of the owned games for a BGG user that match the ID list.", false);
 
         String regex = new StringBuilder("(?i)")
@@ -180,8 +182,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
     }
 
     /**
-     * Add a reaction to the message that called us and send the "typing..."
-     * indicator
+     * Add a reaction to the message that called us and send the "typing..." indicator
      *
      * @param session
      * @param msgChannel
@@ -448,13 +449,14 @@ public class BoardGameListener implements SlackMessagePostedListener {
         int count = 0;
         int partCount = 1;
 
-        LOG.info("\tMaking simple collection for {} with {} items and page size {}", username, total, perPart);
+        String collectionFormat = "%1$s's collection - part %2$d of %3$d";
 
+        LOG.info("\tMaking simple collection for {} with {} items and page size {}", username, total, perPart);
         session.sendMessage(msgChannel, username + " has " + total + " items in their collection. There will be " + totalParts + " parts listed.");
 
         SlackAttachment sa = new SlackAttachment();
-        sa.setFallback(username + "'s collection - part " + partCount + " of " + totalParts);
-        sa.setAuthorName(username + "'s collection - part " + partCount + " of " + totalParts);
+        sa.setFallback(String.format(collectionFormat, username, partCount, totalParts));
+        sa.setAuthorName(String.format(collectionFormat, username, partCount, totalParts));
         sa.setAuthorLink(Constants.BGG_COLL_LINK + username);
         sa.setColor("good");
 
@@ -471,8 +473,8 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 sb = new StringBuilder();
                 sa = new SlackAttachment();
                 partCount++;
-                sa.setFallback(username + "'s collection - part " + partCount + " of " + totalParts);
-                sa.setAuthorName(username + "'s collection - part " + partCount + " of " + totalParts);
+                sa.setFallback(String.format(collectionFormat, username, partCount, totalParts));
+                sa.setAuthorName(String.format(collectionFormat, username, partCount, totalParts));
                 sa.setAuthorLink(Constants.BGG_COLL_LINK + username);
                 sa.setColor("good");
             }
@@ -494,19 +496,21 @@ public class BoardGameListener implements SlackMessagePostedListener {
         List<SlackAttachment> collList = new ArrayList<>();
 
         LOG.info("Creating detailed attachments for {} for {} items", username, result.size());
+        session.sendMessage(msgChannel, "Getting information on the " + result.size() + " items from the collection of " + username);
+
         SlackAttachment sa;
         for (CollectionItem game : result) {
             sa = new SlackAttachment();
-            String year = game.getYearPublished() == null ? " (Unknown)" : " (" + game.getYearPublished() + ")";
+            String year = game.getYearPublished() == null ? UNKNOWN : " (" + game.getYearPublished() + ")";
 
-            sa.setFallback("Information on " + game.getName());
+            sa.setFallback(INFORMATION_ON + game.getName());
             sa.setTitle(game.getName() + year);
             sa.setTitleLink(Constants.BGG_GAME_LINK + game.getObjectId());
             sa.setAuthorIcon(game.getThumbnail());
             sa.setText(game.getComment());
             sa.setColor("good");
             sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
-            sa.addField("BGG ID", String.valueOf(game.getObjectId()), true);
+            sa.addField(BGG_ID, String.valueOf(game.getObjectId()), true);
             if (game.getStats() != null && game.getStats().getRating() != null) {
                 float value = game.getStats().getRating().getValue();
                 sa.addField("Rating", "" + (value > 0 ? value : "Not Rated"), true);
@@ -552,6 +556,8 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         return collList;
     }
+    private static final String INFORMATION_ON = "Information on ";
+    private static final String UNKNOWN = " (Unknown)";
 
     /**
      * Make a simple attachment for listing multiple games
@@ -562,14 +568,14 @@ public class BoardGameListener implements SlackMessagePostedListener {
     private SlackAttachment makeSimpleAttachment(Thing game) {
         StringBuilder nameFormatted = new StringBuilder(game.getName());
         if (game.getYearPublished() == null) {
-            nameFormatted.append(" (Unknown)");
+            nameFormatted.append(UNKNOWN);
         } else {
             nameFormatted.append(" (").append(game.getYearPublished()).append(")");
         }
         nameFormatted.append(" ID: ").append(game.getId());
 
         SlackAttachment sa = new SlackAttachment();
-        sa.setFallback("Information on " + game.getPrimaryName());
+        sa.setFallback(INFORMATION_ON + game.getPrimaryName());
         sa.setTitle(nameFormatted.toString());
         sa.setTitleLink(Constants.BGG_GAME_LINK + game.getId());
         sa.setColor("good");
@@ -585,16 +591,16 @@ public class BoardGameListener implements SlackMessagePostedListener {
      */
     private SlackAttachment makeDetailedAttachment(BoardGameExtended game) {
         SlackAttachment sa = new SlackAttachment();
-        String year = game.getYearPublished() == null ? " (Unknown)" : " (" + game.getYearPublished() + ")";
+        String year = game.getYearPublished() == null ? UNKNOWN : " (" + game.getYearPublished() + ")";
 
-        sa.setFallback("Information on " + game.getName());
+        sa.setFallback(INFORMATION_ON + game.getName());
         sa.setAuthorName(game.getName() + year);
         sa.setAuthorLink(Constants.BGG_GAME_LINK + game.getId());
         sa.setAuthorIcon(game.getThumbnail());
         sa.setText(game.getDescription());
         sa.setColor("good");
         sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
-        sa.addField("BGG ID", String.valueOf(game.getId()), true);
+        sa.addField(BGG_ID, String.valueOf(game.getId()), true);
         sa.addField("Player Count", game.getMinPlayers() + "-" + game.getMaxPlayers(), true);
         sa.addField("Playing Time", String.valueOf(game.getPlayingTime()), true);
         sa.addField("Designer(s)", formatIdValue(game.getBoardGameDesigner()), true);
