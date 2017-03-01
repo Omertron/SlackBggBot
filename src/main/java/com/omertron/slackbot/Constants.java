@@ -19,28 +19,28 @@
  */
 package com.omertron.slackbot;
 
-public interface Constants {
+public final class Constants {
 
     // Bot information
-    String BOT_NAME = "BGG Slack Bot";
-    String BOT_VERSION = "1.0";
+    public static final String BOT_NAME = "BGG Slack Bot";
+    public static final String BOT_VERSION = "1.0";
     // Slack Auth Token property name for property file
-    String BOT_TOKEN = "botToken";
+    public static final String BOT_TOKEN = "botToken";
 
     // Filenames
-    String STAT_FILENAME = "bggbot.stats";
-    
+    public static final String STAT_FILENAME = "bggbot.stats";
+
     // Bot config properties
-    String BOT_ADMINS = "botAdmins";
-    String DELIM_LEFT = "[";
-    String DELIM_RIGHT = "]";
+    public static final String BOT_ADMINS = "botAdmins";
+    public static final String DELIM_LEFT = "[";
+    public static final String DELIM_RIGHT = "]";
 
     // Proxy property names for property file
-    String PROXY_HOST = "proxyHost";
-    String PROXY_PORT = "proxyPort";
+    public static final String PROXY_HOST = "proxyHost";
+    public static final String PROXY_PORT = "proxyPort";
 
     // BGG Stuff
-    String BGG_GAME_LINK = "https://boardgamegeek.com/boardgame/";
-    String BGG_USER_LINK = "https://boardgamegeek.com/user/";
-    String BGG_COLL_LINK = "https://boardgamegeek.com/collection/user/";
+    public static final String BGG_GAME_LINK = "https://boardgamegeek.com/boardgame/";
+    public static final String BGG_USER_LINK = "https://boardgamegeek.com/user/";
+    public static final String BGG_COLL_LINK = "https://boardgamegeek.com/collection/user/";
 }
