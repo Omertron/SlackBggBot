@@ -94,12 +94,7 @@ public class HelpListener implements SlackMessagePostedListener {
             String command = m.group(1).toUpperCase();
             switch (command) {
                 case "HELP":
-                    BotStatistics.increment(StatCategory.HELP, msgSender.getUserName());
-                    session.sendMessage(msgChannel, "", getHelpMessage());
-
-                    if (SlackBot.isBotAdmin(msgSender)) {
-                        session.sendMessageToUser(msgSender, "", getHelpMessageAdmin());
-                    }
+                    createHelpMessage(session, msgChannel, msgSender);
                     break;
                 case "ABOUT":
                     BotStatistics.increment(StatCategory.ABOUT, msgSender.getUserName());
@@ -113,6 +108,22 @@ public class HelpListener implements SlackMessagePostedListener {
                 default:
                     LOG.warn("Unknown command recieved: '{}'", command);
             }
+        }
+    }
+
+    /**
+     * Send the help message to the user
+     *
+     * @param session
+     * @param msgChannel
+     * @param msgSender
+     */
+    private void createHelpMessage(SlackSession session, SlackChannel msgChannel, SlackUser msgSender) {
+        BotStatistics.increment(StatCategory.HELP, msgSender.getUserName());
+        session.sendMessage(msgChannel, "", getHelpMessage());
+
+        if (SlackBot.isBotAdmin(msgSender)) {
+            session.sendMessageToUser(msgSender, "", getHelpMessageAdmin());
         }
     }
 

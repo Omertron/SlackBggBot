@@ -122,64 +122,88 @@ public class BoardGameListener implements SlackMessagePostedListener {
         // Search for a user commnd pattern
         Matcher mCmd = PAT_COMMAND.matcher(msgContent);
         if (mCmd.matches()) {
-            String command = mCmd.group(1).toUpperCase();
-            String query = mCmd.group(2);
-
-            LOG.info("Command '{}', query '{}'", command, query);
-
-            switch (command) {
-                case "SEARCH":
-                    botUpdateChannel(session, msgChannel, event);
-                    BotStatistics.increment(StatCategory.SEARCH, msgSender.getUserName());
-                    commandSearch(session, msgChannel, query);
-                    break;
-                case "GAME":
-                    botUpdateChannel(session, msgChannel, event);
-                    BotStatistics.increment(StatCategory.GAME, msgSender.getUserName());
-                    commandGame(session, msgChannel, query);
-                    break;
-                case "USER":
-                    botUpdateChannel(session, msgChannel, event);
-                    BotStatistics.increment(StatCategory.USER, msgSender.getUserName());
-                    commandUser(session, msgChannel, query);
-                    break;
-                case "COLL":
-                    botUpdateChannel(session, msgChannel, event);
-                    BotStatistics.increment(StatCategory.COLLECTION, msgSender.getUserName());
-                    commandCollection(session, msgChannel, query);
-                    break;
-                default:
-                    LOG.info("Unknown command '" + command + "' found. Ignoring.");
-            }
+            userCommand(session, msgChannel, event, msgSender, mCmd);
             return;
         }
 
         // Search for a direct command pattern
         Matcher mAdmin = PAT_ADMIN.matcher(msgContent);
         if (mAdmin.matches()) {
-            String command = mAdmin.group(1).toUpperCase();
-            String params = mAdmin.group(2);
+            adminCommand(session, msgChannel, msgSender, mAdmin);
+        }
+    }
 
-            if (msgSender.isAdmin()) {
-                LOG.info("Command '{}' recieved from '{}' ({}) with params '{}'", command, msgSender.getUserName(), msgSender.getId(), params);
-                BotStatistics.writeFile();
-                switch (command) {
-                    case "QUIT":
-                        session.sendMessage(msgChannel, "Bot will now quit :disappointed:");
-                        BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
-                        System.exit(0);
-                        break;
-                    case "RESTART":
-                        session.sendMessage(msgChannel, "Bot will now attempt to restart :relieved:");
-                        BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
-                        System.exit(1);
-                        break;
-                    default:
-                        LOG.info("Unknown command '{}' received from {}", command, msgSender.getUserName());
-                }
-            } else {
-                session.sendMessageToUser(msgSender, "You are not authorised to use this command", null);
+    /**
+     * Manage the user commands
+     *
+     * @param session
+     * @param msgChannel
+     * @param msgSender
+     * @param mCmd
+     */
+    private void userCommand(SlackSession session, SlackChannel msgChannel, SlackMessagePosted event, SlackUser msgSender, Matcher mCmd) {
+        String command = mCmd.group(1).toUpperCase();
+        String query = mCmd.group(2);
+
+        LOG.info("Command '{}', query '{}'", command, query);
+
+        switch (command) {
+            case "SEARCH":
+                botUpdateChannel(session, msgChannel, event);
+                BotStatistics.increment(StatCategory.SEARCH, msgSender.getUserName());
+                commandSearch(session, msgChannel, query);
+                break;
+            case "GAME":
+                botUpdateChannel(session, msgChannel, event);
+                BotStatistics.increment(StatCategory.GAME, msgSender.getUserName());
+                commandGame(session, msgChannel, query);
+                break;
+            case "USER":
+                botUpdateChannel(session, msgChannel, event);
+                BotStatistics.increment(StatCategory.USER, msgSender.getUserName());
+                commandUser(session, msgChannel, query);
+                break;
+            case "COLL":
+                botUpdateChannel(session, msgChannel, event);
+                BotStatistics.increment(StatCategory.COLLECTION, msgSender.getUserName());
+                commandCollection(session, msgChannel, query);
+                break;
+            default:
+                LOG.info("Unknown command '" + command + "' found. Ignoring.");
+        }
+    }
+
+    /**
+     * Manage the admin commands
+     *
+     * @param session
+     * @param msgChannel
+     * @param msgSender
+     * @param mAdmin
+     */
+    private void adminCommand(SlackSession session, SlackChannel msgChannel, SlackUser msgSender, Matcher mAdmin) {
+        String command = mAdmin.group(1).toUpperCase();
+        String params = mAdmin.group(2);
+
+        if (msgSender.isAdmin()) {
+            LOG.info("Command '{}' recieved from '{}' ({}) with params '{}'", command, msgSender.getUserName(), msgSender.getId(), params);
+            BotStatistics.writeFile();
+            switch (command) {
+                case "QUIT":
+                    session.sendMessage(msgChannel, "Bot will now quit :disappointed:");
+                    BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
+                    System.exit(0);
+                    break;
+                case "RESTART":
+                    session.sendMessage(msgChannel, "Bot will now attempt to restart :relieved:");
+                    BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
+                    System.exit(1);
+                    break;
+                default:
+                    LOG.info("Unknown command '{}' received from {}", command, msgSender.getUserName());
             }
+        } else {
+            session.sendMessageToUser(msgSender, "You are not authorised to use this command", null);
         }
     }
 
