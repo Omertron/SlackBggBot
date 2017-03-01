@@ -22,7 +22,6 @@ package com.omertron.slackbot;
 import com.omertron.slackbot.listeners.BoardGameListener;
 import com.omertron.slackbot.listeners.HelpListener;
 import com.omertron.slackbot.stats.BotStatistics;
-import com.omertron.slackbot.stats.BotStats;
 import com.omertron.slackbot.utils.PropertyUtils;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
@@ -46,9 +45,6 @@ public class SlackBot {
     private static final Properties PROPS = new Properties();
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
     private static final List<String> BOT_ADMINS = new ArrayList<>();
-
-    // Statistics
-    private static BotStats botStats;
 
     public static void main(String[] args) throws Exception {
         LOG.info("Starting {} v{} ...", Constants.BOT_NAME, Constants.BOT_VERSION);
@@ -98,13 +94,14 @@ public class SlackBot {
             LOG.info("\tReading stats file");
             BotStatistics.readFile();
         }
-        LOG.info("Stats read:\n{}", BotStatistics.generateStatistics(Boolean.FALSE));
+        LOG.info("Stats read:\n{}", BotStatistics.generateStatistics(false, true));
 
         Thread.sleep(Long.MAX_VALUE);
     }
 
     /**
-     * Send a start up message to all BOT admins to inform them of the bot's restart
+     * Send a start up message to all BOT admins to inform them of the bot's
+     * restart
      *
      * @param session
      */

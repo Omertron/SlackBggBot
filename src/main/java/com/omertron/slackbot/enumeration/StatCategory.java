@@ -17,7 +17,7 @@
  *      along with the BGG Slack Bot.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package com.omertron.slackbot.stats;
+package com.omertron.slackbot.enumeration;
 
 import java.io.Serializable;
 

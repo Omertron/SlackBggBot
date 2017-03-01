@@ -22,11 +22,12 @@ package com.omertron.slackbot.stats;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omertron.slackbot.Constants;
+import com.omertron.slackbot.enumeration.StatCategory;
+import com.omertron.slackbot.model.StatHolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
-import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,13 +39,13 @@ import org.slf4j.LoggerFactory;
 public final class BotStatistics {
 
     private static final Logger LOG = LoggerFactory.getLogger(BotStatistics.class);
-    private static final Map<StatCategory, Integer> STATISTICS = new EnumMap<>(StatCategory.class);
+    private static final Map<StatCategory, StatHolder> STATISTICS = new EnumMap<>(StatCategory.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     static {
         // Initialise the values
         for (StatCategory stat : StatCategory.values()) {
-            STATISTICS.put(stat, 0);
+            STATISTICS.put(stat, new StatHolder(stat));
         }
     }
 
@@ -53,81 +54,83 @@ public final class BotStatistics {
     }
 
     /**
-     * Get the current value of the required statistic
+     * Get the current total value of the required statistic
      *
      * @param stat
      * @return
      */
-    public static int getStatistic(StatCategory stat) {
-        return STATISTICS.get(stat);
+    public static int getStatisticTotal(StatCategory stat) {
+        return STATISTICS.get(stat).getTotal();
     }
 
     /**
      * Set the statistic to a specific value
      *
      * @param stat
+     * @param username
      * @param value
      */
-    public static synchronized void setStatistic(StatCategory stat, Integer value) {
-        STATISTICS.put(stat, value);
+    public static synchronized void setStatistic(StatCategory stat, String username, int value) {
+        STATISTICS.get(stat).setValue(username, value);
     }
 
     /**
      * Increment the statistic by 1
      *
      * @param stat
+     * @param username
      */
-    public static synchronized void increment(StatCategory stat) {
-        increment(stat, 1);
+    public static synchronized void increment(StatCategory stat, String username) {
+        increment(stat, username, 1);
     }
 
     /**
      * Increment the statistic by the value
      *
      * @param stat
+     * @param username
      * @param amount
      */
-    public static synchronized void increment(StatCategory stat, Integer amount) {
-        Integer current = STATISTICS.get(stat);
-        STATISTICS.put(stat, current + amount);
+    public static synchronized void increment(StatCategory stat, String username, int amount) {
+        STATISTICS.get(stat).increment(username, amount);
     }
 
     /**
      * Decrement the statistic by 1
      *
      * @param stat
+     * @param username
      */
-    public static synchronized void decrement(StatCategory stat) {
-        decrement(stat, 1);
+    public static synchronized void decrement(StatCategory stat, String username) {
+        decrement(stat, username, 1);
     }
 
     /**
      * Decrement the statistic by the value
      *
      * @param stat
+     * @param username
      * @param amount
      */
-    public static synchronized void decrement(StatCategory stat, Integer amount) {
-        Integer current = STATISTICS.get(stat);
-        STATISTICS.put(stat, current - amount);
+    public static synchronized void decrement(StatCategory stat, String username, int amount) {
+        STATISTICS.get(stat).decrement(username, amount);
     }
 
     /**
      * Output the jukebox statistics
      *
      * @param skipZero Skip zero values from the output
+     * @param detailed Provide detailed username breakdown of usage
      * @return
      */
-    public static String generateStatistics(Boolean skipZero) {
+    public static String generateStatistics(boolean skipZero, boolean detailed) {
         StringBuilder statOutput = new StringBuilder("Statistics:\n");
 
         // Build the counts
-        int value;
-        for (StatCategory stat : StatCategory.values()) {
-            value = STATISTICS.get(stat);
+        for (StatHolder stat : STATISTICS.values()) {
+            int value = stat.getTotal();
             if (value > 0 || !skipZero) {
-                statOutput.append(WordUtils.capitalizeFully(stat.toString().replace("_", " ").toLowerCase()));
-                statOutput.append(" = ").append(value).append("\n");
+                statOutput.append(stat.formatOutput(true));
             }
         }
 
@@ -138,20 +141,21 @@ public final class BotStatistics {
         try {
             MAPPER.writeValue(new File(Constants.STAT_FILENAME), STATISTICS);
         } catch (IOException ex) {
-            LOG.warn("Failed to write stats to {}", Constants.STAT_FILENAME,ex);
+            LOG.warn("Failed to write stats to {}", Constants.STAT_FILENAME, ex);
         }
     }
 
     public static void readFile() {
         try {
             File f = new File(Constants.STAT_FILENAME);
-            TypeReference<EnumMap<StatCategory, Integer>> typeRef = new TypeReference<EnumMap<StatCategory, Integer>>(){};
-            Map<StatCategory, Integer> readObj = MAPPER.readValue(f, typeRef);
-            
+            TypeReference<EnumMap<StatCategory, StatHolder>> typeRef = new TypeReference<EnumMap<StatCategory, StatHolder>>() {
+            };
+            Map<StatCategory, StatHolder> readObj = MAPPER.readValue(f, typeRef);
+
             STATISTICS.clear();
             STATISTICS.putAll(readObj);
         } catch (IOException ex) {
-            LOG.warn("Failed to read stats from {}", Constants.STAT_FILENAME,ex);
+            LOG.warn("Failed to read stats from {}", Constants.STAT_FILENAME, ex);
         }
     }
 }

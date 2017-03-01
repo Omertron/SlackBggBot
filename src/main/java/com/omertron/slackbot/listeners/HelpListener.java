@@ -23,9 +23,9 @@ import com.omertron.slackbot.Constants;
 import static com.omertron.slackbot.Constants.DELIM_LEFT;
 import static com.omertron.slackbot.Constants.DELIM_RIGHT;
 import com.omertron.slackbot.SlackBot;
+import com.omertron.slackbot.enumeration.StatCategory;
 import com.omertron.slackbot.model.HelpInfo;
 import com.omertron.slackbot.stats.BotStatistics;
-import com.omertron.slackbot.stats.StatCategory;
 import com.omertron.slackbot.utils.GitRepositoryState;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
@@ -80,7 +80,7 @@ public class HelpListener implements SlackMessagePostedListener {
         // Channel On Which Message Was Posted
         SlackChannel msgChannel = event.getChannel();
         String msgContent = event.getMessageContent();
-        SlackUser sender = event.getSender();
+        SlackUser msgSender = event.getSender();
 
         // Filter out the bot's own messages
         if (session.sessionPersona().getId().equals(event.getSender().getId())) {
@@ -93,22 +93,22 @@ public class HelpListener implements SlackMessagePostedListener {
             String command = m.group(1).toUpperCase();
             switch (command) {
                 case "HELP":
-                    BotStatistics.increment(StatCategory.HELP);
+                    BotStatistics.increment(StatCategory.HELP, msgSender.getUserName());
 //                    BotStats.INSTANCE.addStat(StatCategory.HELP, sender.getUserName(), 1);
                     session.sendMessage(msgChannel, "", getHelpMessage());
 
-                    if (SlackBot.isBotAdmin(sender)) {
-                        session.sendMessageToUser(sender, "", getHelpMessageAdmin());
+                    if (SlackBot.isBotAdmin(msgSender)) {
+                        session.sendMessageToUser(msgSender, "", getHelpMessageAdmin());
                     }
                     break;
                 case "ABOUT":
-                    BotStatistics.increment(StatCategory.ABOUT);
+                    BotStatistics.increment(StatCategory.ABOUT, msgSender.getUserName());
 //                    BotStats.INSTANCE.addStat(StatCategory.ABOUT, sender.getUserName(), 1);
                     session.sendMessage(msgChannel, "", getAboutMessage());
                     break;
                 case "STATS":
-                    BotStatistics.increment(StatCategory.STATS);
-                    String stats = BotStatistics.generateStatistics(Boolean.TRUE);
+                    BotStatistics.increment(StatCategory.STATS, msgSender.getUserName());
+                    String stats = BotStatistics.generateStatistics(true, SlackBot.isBotAdmin(msgSender));
                     BotStatistics.writeFile();
 //                    BotStats.INSTANCE.addStat(StatCategory.STATS, sender.getUserName(), 1);
 //                    String stats = BotStats.INSTANCE.getFormattedStats();
