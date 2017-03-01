@@ -34,6 +34,8 @@ import com.omertron.bgg.model.UserInfo;
 import com.omertron.slackbot.Constants;
 import static com.omertron.slackbot.Constants.DELIM_LEFT;
 import static com.omertron.slackbot.Constants.DELIM_RIGHT;
+import com.omertron.slackbot.stats.BotStatistics;
+import com.omertron.slackbot.stats.StatCategory;
 import com.ullink.slack.simpleslackapi.*;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
 import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
@@ -124,18 +126,26 @@ public class BoardGameListener implements SlackMessagePostedListener {
             switch (command) {
                 case "SEARCH":
                     botUpdateChannel(session, msgChannel, event);
+                    BotStatistics.increment(StatCategory.SEARCH);
+//                    BotStats.INSTANCE.addStat(StatCategory.SEARCH, msgSender.getUserName(), 1);
                     commandSearch(session, msgChannel, query);
                     break;
                 case "GAME":
                     botUpdateChannel(session, msgChannel, event);
+                    BotStatistics.increment(StatCategory.GAME);
+//                    BotStats.INSTANCE.addStat(StatCategory.GAME, msgSender.getUserName(), 1);
                     commandGame(session, msgChannel, query);
                     break;
                 case "USER":
                     botUpdateChannel(session, msgChannel, event);
+                    BotStatistics.increment(StatCategory.USER);
+//                    BotStats.INSTANCE.addStat(StatCategory.USER, msgSender.getUserName(), 1);
                     commandUser(session, msgChannel, query);
                     break;
                 case "COLL":
                     botUpdateChannel(session, msgChannel, event);
+                    BotStatistics.increment(StatCategory.COLLECTION);
+//                    BotStats.INSTANCE.addStat(StatCategory.COLLECTION, msgSender.getUserName(), 1);
                     commandCollection(session, msgChannel, query);
                     break;
                 default:
@@ -155,10 +165,16 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 switch (command) {
                     case "QUIT":
                         session.sendMessage(msgChannel, "Bot will now quit :disappointed:");
+                        BotStatistics.increment(StatCategory.ADMIN);
+                        BotStatistics.writeFile();
+//                        BotStats.INSTANCE.addStat(StatCategory.ADMIN, msgSender.getUserName(), 1);
                         System.exit(0);
                         break;
                     case "RESTART":
                         session.sendMessage(msgChannel, "Bot will now attempt to restart :relieved:");
+                        BotStatistics.increment(StatCategory.ADMIN);
+                        BotStatistics.writeFile();
+//                        BotStats.INSTANCE.addStat(StatCategory.ADMIN, msgSender.getUserName(), 1);
                         System.exit(1);
                         break;
                     default:

@@ -66,3 +66,4 @@ $RECYCLE.BIN/
 /nbactions.xml
 /*.log
 /src/main/resources/git.properties
+/bggbot.stats

@@ -21,10 +21,13 @@ package com.omertron.slackbot;
 
 import com.omertron.slackbot.listeners.BoardGameListener;
 import com.omertron.slackbot.listeners.HelpListener;
+import com.omertron.slackbot.stats.BotStatistics;
+import com.omertron.slackbot.stats.BotStats;
 import com.omertron.slackbot.utils.PropertyUtils;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory;
+import java.io.File;
 import java.net.Proxy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -43,6 +46,9 @@ public class SlackBot {
     private static final Properties PROPS = new Properties();
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
     private static final List<String> BOT_ADMINS = new ArrayList<>();
+
+    // Statistics
+    private static BotStats botStats;
 
     public static void main(String[] args) throws Exception {
         LOG.info("Starting {} v{} ...", Constants.BOT_NAME, Constants.BOT_VERSION);
@@ -72,26 +78,33 @@ public class SlackBot {
         session.addMessagePostedListener(new HelpListener());
 
         LOG.info("Session connected: {}", session.isConnected());
-        LOG.info("  Connected to {} ({})", session.getTeam().getName(), session.getTeam().getId());
-        LOG.info("  Found {} channels and {} users", session.getChannels().size(), session.getUsers().size());
+        LOG.info("\tConnected to {} ({})", session.getTeam().getName(), session.getTeam().getId());
+        LOG.info("\tFound {} channels and {} users", session.getChannels().size(), session.getUsers().size());
         switch (BOT_ADMINS.size()) {
             case 0:
-                LOG.warn("  There are no BOT Admins found! Please add at least 1 in the properties file!");
-                LOG.warn("  User the property '{}' to add them", Constants.BOT_ADMINS);
+                LOG.warn("\tThere are no BOT Admins found! Please add at least 1 in the properties file!");
+                LOG.warn("\tUser the property '{}' to add them", Constants.BOT_ADMINS);
                 break;
             case 1:
-                LOG.info("  There is 1 BOT admin: {}", StringUtils.join(BOT_ADMINS, ","));
+                LOG.info("\tThere is 1 BOT admin: {}", StringUtils.join(BOT_ADMINS, ","));
                 break;
             default:
-                LOG.info("  There are {} BOT admins: {}", BOT_ADMINS.size(), StringUtils.join(BOT_ADMINS, ","));
+                LOG.info("\tThere are {} BOT admins: {}", BOT_ADMINS.size(), StringUtils.join(BOT_ADMINS, ","));
         }
+
+        LOG.info("Checking for stats file");
+        File f = new File(Constants.STAT_FILENAME);
+        if (f.exists()) {
+            LOG.info("\tReading stats file");
+            BotStatistics.readFile();
+        }
+        LOG.info("Stats read:\n{}", BotStatistics.generateStatistics(Boolean.FALSE));
 
         Thread.sleep(Long.MAX_VALUE);
     }
 
     /**
-     * Send a start up message to all BOT admins to inform them of the bot's
-     * restart
+     * Send a start up message to all BOT admins to inform them of the bot's restart
      *
      * @param session
      */
