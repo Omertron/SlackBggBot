@@ -21,10 +21,6 @@ package com.omertron.slackbot;
 
 public final class Constants {
 
-    private Constants() {
-        throw new UnsupportedOperationException("Class cannot be instantiated");
-    }
-
     // Bot information
     public static final String BOT_NAME = "BGG Slack Bot";
     public static final String BOT_VERSION = "1.0";
@@ -47,4 +43,8 @@ public final class Constants {
     public static final String BGG_GAME_LINK = "https://boardgamegeek.com/boardgame/";
     public static final String BGG_USER_LINK = "https://boardgamegeek.com/user/";
     public static final String BGG_COLL_LINK = "https://boardgamegeek.com/collection/user/";
+
+    private Constants() {
+        throw new UnsupportedOperationException("Class cannot be instantiated");
+    }
 }

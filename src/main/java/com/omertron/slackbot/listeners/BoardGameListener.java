@@ -61,6 +61,8 @@ public class BoardGameListener implements SlackMessagePostedListener {
     private static final Pattern PAT_COLL_PARAM = Pattern.compile("^(\\w*)(\\s(.+))?$");
     private static final String BGG_ID = "BGG ID";
     private static final String USERNAME = "username";
+    private static final String INFORMATION_ON = "Information on ";
+    private static final String UNKNOWN = " (Unknown)";
 
     static {
         List<String> commands = new ArrayList<>();
@@ -492,6 +494,15 @@ public class BoardGameListener implements SlackMessagePostedListener {
         return collList;
     }
 
+    /**
+     * Create a detailed view of of the collection
+     *
+     * @param session
+     * @param msgChannel
+     * @param result
+     * @param username
+     * @return
+     */
     private List<SlackAttachment> createDetailedCollection(SlackSession session, SlackChannel msgChannel, List<CollectionItem> result, String username) {
         List<SlackAttachment> collList = new ArrayList<>();
 
@@ -556,8 +567,6 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         return collList;
     }
-    private static final String INFORMATION_ON = "Information on ";
-    private static final String UNKNOWN = " (Unknown)";
 
     /**
      * Make a simple attachment for listing multiple games

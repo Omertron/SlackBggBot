@@ -23,22 +23,22 @@ public class GitRepositoryState {
     private static final String UNKNOWN = "UNKNOWN";
 
     // git properties
-    private String branch = UNKNOWN;                  // =${git.branch}
-    private Boolean dirty = null;                     // =${git.dirty}
-    private List<String> tags = null;                 // =${git.tags} // comma separated tag names
-    private String describe = UNKNOWN;                // =${git.commit.id.describe}
-    private String describeShort = UNKNOWN;           // =${git.commit.id.describe-short}
-    private String commitId = UNKNOWN;                // =${git.commit.id}
-    private String commitIdAbbrev = UNKNOWN;          // =${git.commit.id.abbrev}
-    private String buildUserName = UNKNOWN;           // =${git.build.user.name}
-    private String buildUserEmail = UNKNOWN;          // =${git.build.user.email}
-    private String buildTime = UNKNOWN;               // =${git.build.time}
-    private String commitUserName = UNKNOWN;          // =${git.commit.user.name}
-    private String commitUserEmail = UNKNOWN;         // =${git.commit.user.email}
-    private String commitMessageFull = UNKNOWN;       // =${git.commit.message.full}
-    private String commitMessageShort = UNKNOWN;      // =${git.commit.message.short}
-    private String commitTime = UNKNOWN;              // =${git.commit.time}
-    private String buildVersion = UNKNOWN;            // =${git.build.version}
+    private String branch = UNKNOWN;
+    private Boolean dirty = null;
+    private List<String> tags = null;
+    private String describe = UNKNOWN;
+    private String describeShort = UNKNOWN;
+    private String commitId = UNKNOWN;
+    private String commitIdAbbrev = UNKNOWN;
+    private String buildUserName = UNKNOWN;
+    private String buildUserEmail = UNKNOWN;
+    private String buildTime = UNKNOWN;
+    private String commitUserName = UNKNOWN;
+    private String commitUserEmail = UNKNOWN;
+    private String commitMessageFull = UNKNOWN;
+    private String commitMessageShort = UNKNOWN;
+    private String commitTime = UNKNOWN;
+    private String buildVersion = UNKNOWN;
 
     /**
      * Git Repository State
