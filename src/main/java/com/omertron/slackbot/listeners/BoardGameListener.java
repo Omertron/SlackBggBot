@@ -346,10 +346,10 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         SlackAttachment sa = new SlackAttachment();
         sa.setFallback("User information on " + username);
-        sa.setAuthorName(StringUtils.joinWith(" ", result.getFirstName(), result.getLastName()));
-        sa.setAuthorLink(Constants.BGG_USER_LINK + result.getName());
+        sa.setTitle(StringUtils.joinWith(" ", result.getFirstName(), result.getLastName()));
+        sa.setTitleLink(Constants.BGG_USER_LINK + result.getName());
         sa.setAuthorIcon(formatHttpLink(result.getAvatarLink()));
-        sa.setColor("good");
+        sa.setColor(Constants.ATTACH_COLOUR);
         sa.addField("Year Registered", "" + result.getYearRegistered(), true);
         sa.addField("Location", StringUtils.joinWith(", ", result.getStateOrProvince(), result.getCountry()), true);
         sa.addField("Trade Rating", "" + result.getTradeRating(), true);
@@ -484,7 +484,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         sa.setFallback(String.format(collectionFormat, username, partCount, totalParts));
         sa.setAuthorName(String.format(collectionFormat, username, partCount, totalParts));
         sa.setAuthorLink(Constants.BGG_COLL_LINK + username);
-        sa.setColor("good");
+        sa.setColor(Constants.ATTACH_COLOUR);
 
         List<SlackAttachment> collList = new ArrayList<>();
 
@@ -502,7 +502,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 sa.setFallback(String.format(collectionFormat, username, partCount, totalParts));
                 sa.setAuthorName(String.format(collectionFormat, username, partCount, totalParts));
                 sa.setAuthorLink(Constants.BGG_COLL_LINK + username);
-                sa.setColor("good");
+                sa.setColor(Constants.ATTACH_COLOUR);
             }
 
             sb.append(String.format("%1$s (%2$s) - <%3$s%4$d|%4$d>\n",
@@ -530,8 +530,22 @@ public class BoardGameListener implements SlackMessagePostedListener {
     private List<SlackAttachment> createDetailedCollection(SlackSession session, SlackChannel msgChannel, List<CollectionItem> result, String username) {
         List<SlackAttachment> collList = new ArrayList<>();
 
-        LOG.info("Creating detailed attachments for {} for {} items", username, result.size());
-        session.sendMessage(msgChannel, "Getting information on the " + result.size() + " items from the collection of " + username);
+        String logMessage, attMessage;
+        switch (result.size()) {
+            case 0:
+                session.sendMessage(msgChannel, "No items found in the collection of " + username);
+                return collList;
+            case 1:
+                logMessage = "Creating detailed attatchment for {} for {} item";
+                attMessage = "Getting informaton on the item from the collection of " + username;
+                break;
+            default:
+                logMessage = "Creating detailed attachments for {} for {} items";
+                attMessage = "Getting informaton on the " + result.size() + " items from the collection of " + username;
+        }
+
+        LOG.info(logMessage, username, result.size());
+        session.sendMessage(msgChannel, attMessage);
 
         SlackAttachment sa;
         for (CollectionItem game : result) {
@@ -543,7 +557,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
             sa.setTitleLink(Constants.BGG_GAME_LINK + game.getObjectId());
             sa.setAuthorIcon(game.getThumbnail());
             sa.setText(game.getComment());
-            sa.setColor("good");
+            sa.setColor(Constants.ATTACH_COLOUR);
             sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
             sa.addField(BGG_ID, String.valueOf(game.getObjectId()), true);
             if (game.getStats() != null && game.getStats().getRating() != null) {
@@ -578,7 +592,6 @@ public class BoardGameListener implements SlackMessagePostedListener {
     private List<String> calculateStatus(OwnerStatus ownerStatus) {
         List<String> status = new ArrayList<>();
         if (ownerStatus != null) {
-
             if (ownerStatus.isOwn()) {
                 status.add("Own");
             }
@@ -623,7 +636,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         sa.setFallback(INFORMATION_ON + game.getPrimaryName());
         sa.setTitle(nameFormatted.toString());
         sa.setTitleLink(Constants.BGG_GAME_LINK + game.getId());
-        sa.setColor("good");
+        sa.setColor(Constants.ATTACH_COLOUR);
 
         return sa;
     }
@@ -643,7 +656,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         sa.setAuthorLink(Constants.BGG_GAME_LINK + game.getId());
         sa.setAuthorIcon(game.getThumbnail());
         sa.setText(game.getDescription());
-        sa.setColor("good");
+        sa.setColor(Constants.ATTACH_COLOUR);
         sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
         sa.addField(BGG_ID, String.valueOf(game.getId()), true);
         sa.addField("Player Count", game.getMinPlayers() + "-" + game.getMaxPlayers(), true);
