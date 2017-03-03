@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
@@ -482,8 +483,8 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         SlackAttachment sa = new SlackAttachment();
         sa.setFallback(String.format(collectionFormat, username, partCount, totalParts));
-        sa.setAuthorName(String.format(collectionFormat, username, partCount, totalParts));
-        sa.setAuthorLink(Constants.BGG_COLL_LINK + username);
+        sa.setTitle(String.format(collectionFormat, username, partCount, totalParts));
+        sa.setTitleLink(Constants.BGG_COLL_LINK + username);
         sa.setColor(Constants.ATTACH_COLOUR);
 
         List<SlackAttachment> collList = new ArrayList<>();
@@ -556,7 +557,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
             sa.setTitle(game.getName() + year);
             sa.setTitleLink(Constants.BGG_GAME_LINK + game.getObjectId());
             sa.setAuthorIcon(game.getThumbnail());
-            sa.setText(game.getComment());
+            sa.setText(StringEscapeUtils.unescapeHtml4(game.getComment()));
             sa.setColor(Constants.ATTACH_COLOUR);
             sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
             sa.addField(BGG_ID, String.valueOf(game.getObjectId()), true);
@@ -655,7 +656,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         sa.setAuthorName(game.getName() + year);
         sa.setAuthorLink(Constants.BGG_GAME_LINK + game.getId());
         sa.setAuthorIcon(game.getThumbnail());
-        sa.setText(game.getDescription());
+        sa.setText(StringEscapeUtils.unescapeHtml4(game.getDescription()));
         sa.setColor(Constants.ATTACH_COLOUR);
         sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
         sa.addField(BGG_ID, String.valueOf(game.getId()), true);
@@ -695,7 +696,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
      * @param link
      * @return
      */
-    private String formatHttpLink(String link) {
+    private String formatHttpLink(final String link) {
         if (link == null || link.isEmpty() || link.startsWith("http")) {
             return link;
         } else {
