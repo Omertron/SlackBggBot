@@ -555,41 +555,53 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 sa.addField("Num Plays", "" + game.getNumPlays(), true);
             }
 
-            if (game.getOwnerStatus() != null) {
-                OwnerStatus os = game.getOwnerStatus();
-                List<String> status = new ArrayList<>();
+            LOG.info("Owner Status: {}", game.getOwnerStatus().toString());
 
-                if (os.isOwn()) {
-                    status.add("Own");
-                }
-                if (os.isForTrade()) {
-                    status.add("For Trade");
-                }
-                if (os.isPreordered()) {
-                    status.add("Pre-ordered");
-                }
-                if (os.isPreviouslyOwned()) {
-                    status.add("Prev Owned");
-                }
-                if (os.isWant()) {
-                    status.add("Wanted");
-                }
-                if (os.isWantToBuy()) {
-                    status.add("Want To Buy");
-                }
-                if (os.isWantToPlay()) {
-                    status.add("Want To Play");
-                }
-
-                if (!status.isEmpty()) {
-                    sa.addField("Owner Status", StringUtils.join(status, ","), true);
-                }
+            List<String> status = calculateStatus(game.getOwnerStatus());
+            if (!status.isEmpty()) {
+                sa.addField("Owner Status", StringUtils.join(status, ","), true);
             }
+            LOG.info("Status: {}", status.toString());
 
             collList.add(sa);
         }
 
         return collList;
+    }
+
+    /**
+     * Create a string list with the list of owner status fields
+     *
+     * @param ownerStatus The object to process
+     * @return A list of the string statuses
+     */
+    private List<String> calculateStatus(OwnerStatus ownerStatus) {
+        List<String> status = new ArrayList<>();
+        if (ownerStatus != null) {
+
+            if (ownerStatus.isOwn()) {
+                status.add("Own");
+            }
+            if (ownerStatus.isForTrade()) {
+                status.add("For Trade");
+            }
+            if (ownerStatus.isPreordered()) {
+                status.add("Pre-ordered");
+            }
+            if (ownerStatus.isPreviouslyOwned()) {
+                status.add("Prev Owned");
+            }
+            if (ownerStatus.isWant()) {
+                status.add("Wanted");
+            }
+            if (ownerStatus.isWantToBuy()) {
+                status.add("Want To Buy");
+            }
+            if (ownerStatus.isWantToPlay()) {
+                status.add("Want To Play");
+            }
+        }
+        return status;
     }
 
     /**
