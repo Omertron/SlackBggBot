@@ -28,7 +28,7 @@ public final class Constants {
     public static final String BOT_TOKEN = "botToken";
 
     // Filenames
-    public static final String STAT_FILENAME = "bggbot.stats";
+    public static final String STAT_FILENAME = "bggbot_stats.json";
 
     // Bot config properties
     public static final String BOT_ADMINS = "botAdmins";
