@@ -20,6 +20,7 @@
 package com.omertron.slackbot;
 
 import com.omertron.slackbot.listeners.BoardGameListener;
+import com.omertron.slackbot.listeners.GoogleSheetsListener;
 import com.omertron.slackbot.listeners.HelpListener;
 import com.omertron.slackbot.stats.BotStatistics;
 import com.omertron.slackbot.utils.PropertyUtils;
@@ -40,25 +41,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SlackBot {
-
+    
     private static final Logger LOG = LoggerFactory.getLogger(SlackBot.class);
     private static final Properties PROPS = new Properties();
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
     private static final List<String> BOT_ADMINS = new ArrayList<>();
-
+    
     private SlackBot() {
         // No need for a constructor in the main class
     }
-
+    
     public static void main(String[] args) throws Exception {
         LOG.info("Starting {} v{} ...", Constants.BOT_NAME, Constants.BOT_VERSION);
 
         // Load the properties
         PropertyUtils.initProperties(PROPS, DEFAULT_PROPERTIES_FILE);
-
+        
         LOG.info("Starting session...");
         SlackSession session;
-
+        
         String proxyURL = PROPS.getProperty(Constants.PROXY_HOST);
         if (StringUtils.isNotBlank(proxyURL)) {
             int proxyPort = Integer.parseInt(PROPS.getProperty(Constants.PROXY_PORT, "80"));
@@ -66,7 +67,7 @@ public class SlackBot {
         } else {
             session = SlackSessionFactory.createWebSocketSlackSession(PROPS.getProperty(Constants.BOT_TOKEN));
         }
-
+        
         session.connect();
         // Populate the BOT admins
         populateBotAdmins(session);
@@ -74,9 +75,11 @@ public class SlackBot {
         notifyStartup(session);
         // Add board game listner
         session.addMessagePostedListener(new BoardGameListener());
+        // Add Wirral Biscuits and Boardgames 
+        session.addMessagePostedListener(new GoogleSheetsListener());
         // Add help listener
         session.addMessagePostedListener(new HelpListener());
-
+        
         LOG.info("Session connected: {}", session.isConnected());
         LOG.info("\tConnected to {} ({})", session.getTeam().getName(), session.getTeam().getId());
         LOG.info("\tFound {} channels and {} users", session.getChannels().size(), session.getUsers().size());
@@ -91,7 +94,7 @@ public class SlackBot {
             default:
                 LOG.info("\tThere are {} BOT admins: {}", BOT_ADMINS.size(), StringUtils.join(BOT_ADMINS, ","));
         }
-
+        
         LOG.info("Checking for stats file");
         File f = new File(Constants.STAT_FILENAME);
         if (f.exists()) {
@@ -99,7 +102,7 @@ public class SlackBot {
             BotStatistics.readFile();
         }
         LOG.info("Stats read:\n{}", BotStatistics.generateStatistics(false, true));
-
+        
         Thread.sleep(Long.MAX_VALUE);
     }
 
@@ -113,10 +116,10 @@ public class SlackBot {
         TimeZone tz = TimeZone.getTimeZone("UTC");
         DateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
         df.setTimeZone(tz);
-
+        
         String message = Constants.BOT_NAME + " started at " + df.format(new Date());
         LOG.info("  {}", message);
-
+        
         for (String username : BOT_ADMINS) {
             SlackUser user = session.findUserByUserName(username);
             if (user != null) {
@@ -134,7 +137,7 @@ public class SlackBot {
      */
     private static void populateBotAdmins(SlackSession session) {
         String users = PROPS.getProperty(Constants.BOT_ADMINS, "");
-
+        
         if (StringUtils.isNotBlank(users)) {
             SlackUser sUser;
             for (String user : StringUtils.split(users, ",")) {
@@ -148,7 +151,7 @@ public class SlackBot {
                 }
             }
         }
-
+        
     }
 
     /**
