@@ -22,6 +22,7 @@ package com.omertron.slackbot.listeners;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.omertron.slackbot.Constants;
+import com.omertron.slackbot.model.PlayerInfo;
 import com.omertron.slackbot.model.SheetInfo;
 import com.omertron.slackbot.sheets.GoogleSheets;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
@@ -50,7 +51,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     private static final String SS_ID = "1Tbnvj3Colt5CnxlDUNk1L10iANm4jVUvJpD53mjKOYY";
     private static final List<String> CHANNELS = new ArrayList<>();
     private final Sheets service;
-    private static final Map<String, String> PLAYERS = new HashMap<>();
+    private static final Map<String, PlayerInfo> PLAYERS = new HashMap<>();
     // Sheet ranges
     private static final String PLAYER_NAMES = "Stats!B4:D14";
     private static final String NEXT_GAME_DATA = "Stats!R16:S27";
@@ -135,7 +136,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
                 String players = row.get(0).toString();
                 for (String p : StringUtils.split(players, ",")) {
                     if (PLAYERS.containsKey(p)) {
-                        si.addPlayer(PLAYERS.get(p));
+                        si.addPlayer(PLAYERS.get(p).getName());
                     } else {
                         si.addPlayer(p);
                     }
@@ -185,12 +186,13 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
 
         sa.setText("Next game night is " + sheetInfo.getGameDate());
         sa.setThumbUrl(sheetInfo.getGameImageUrl());
-        sa.addField("Pin Holder", sheetInfo.getPinHolder(), true);
-        sa.addField("Next Chooser", sheetInfo.getNextChooser(), true);
 
         if (!sheetInfo.getPlayers().isEmpty()) {
-            sa.addField("Players", StringUtils.join(sheetInfo.getPlayers(), "\n"), true);
+            sa.addField("Attendees", StringUtils.join(sheetInfo.getPlayers(), ","), true);
         }
+
+        sa.addField("Pin Holder", sheetInfo.getPinHolder(), true);
+        sa.addField("Next Chooser", sheetInfo.getNextChooser(), true);
 
         return sa;
     }
@@ -203,10 +205,15 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         PLAYERS.clear();
         List<List<Object>> values = response.getValues();
         if (values != null && !values.isEmpty()) {
+            PlayerInfo pi;
             for (List row : values) {
                 if (row.size() > 0) {
-                    LOG.info("\t{} = {}", row.get(0), row.get(1));
-                    PLAYERS.put(row.get(0).toString(), row.get(1).toString());
+                    pi = new PlayerInfo(row.get(0).toString(), row.get(1).toString());
+                    if (row.size() > 2) {
+                        pi.setBggUsername(row.get(2).toString());
+                    }
+                    LOG.info("\t{}", pi.toString());
+                    PLAYERS.put(pi.getInitial(), pi);
                 }
             }
         }

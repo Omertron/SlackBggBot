@@ -27,25 +27,17 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
-import com.google.api.services.sheets.v4.model.BatchGetValuesResponse;
-import com.google.api.services.sheets.v4.model.ValueRange;
 import com.omertron.slackbot.Constants;
-import com.omertron.slackbot.model.SheetInfo;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class GoogleSheets {
 
     private static final Logger LOG = LoggerFactory.getLogger(GoogleSheets.class);
-    private static final String SS_ID = "1Tbnvj3Colt5CnxlDUNk1L10iANm4jVUvJpD53mjKOYY";
     /**
      * Global instance of the JSON factory.
      */
@@ -103,74 +95,9 @@ public class GoogleSheets {
                     .setApplicationName(Constants.BOT_NAME)
                     .build();
         }
-        
+
         LOG.info("Got sheet service");
         return sheets;
-    }
-
-    private static final String SS_DATE = "Stats!S26";
-    private static final String SS_CHOOSER_NAME = "Stats!S24";
-    private static final String SS_GAME = "Stats!S25";
-    private static final String SS_GAME_ID = "Stats!S18";
-    private static final String SS_PIN_HOLDER = "Stats!S22";
-
-    public static void processSheet() throws IOException {
-        // Build a new authorized API client service.
-        Sheets service = getSheetsService();
-
-        List<String> ranges = new ArrayList<>();
-        ranges.add(SS_DATE);
-        ranges.add(SS_CHOOSER_NAME);
-        ranges.add(SS_GAME);
-        ranges.add(SS_GAME_ID);
-        ranges.add(SS_PIN_HOLDER);
-
-        BatchGetValuesResponse response = service.spreadsheets().values()
-                .batchGet(SS_ID)
-                .setRanges(ranges)
-                .execute();
-
-        List<ValueRange> valueRanges = response.getValueRanges();
-        for (ValueRange vRange : valueRanges) {
-            List<List<Object>> values = vRange.getValues();
-            if (values == null || values.isEmpty()) {
-                LOG.info("No data found.");
-            } else {
-                for (List row : values) {
-                    LOG.info("{}", row.get(0));
-                }
-            }
-        }
-
-    }
-
-    public static void singleRange() throws IOException {
-        // Build a new authorized API client service.
-        Sheets service = getSheetsService();
-
-        String range = "Stats!R16:S27";
-        SheetInfo si = new SheetInfo();
-
-        ValueRange response = service.spreadsheets().values()
-                .get(SS_ID, range)
-                .execute();
-        List<List<Object>> values = response.getValues();
-        String key, value;
-        if (values != null && !values.isEmpty()) {
-            for (List row : values) {
-                if (row.size() > 0) {
-                    key = row.get(0).toString().toUpperCase();
-                    value = row.size() > 1 ? row.get(1).toString() : null;
-                    LOG.info("{}\t=\t\t'{}'", key, value);
-                    if (!si.addItem(key, value)) {
-                        LOG.info("Unmatched row: '{}'='{}'", key, value);
-                    }
-                }
-            }
-
-            LOG.info("{}", ToStringBuilder.reflectionToString(si, ToStringStyle.MULTI_LINE_STYLE));
-        }
-
     }
 
 }
