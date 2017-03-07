@@ -19,6 +19,8 @@
  */
 package com.omertron.slackbot.model;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -34,6 +36,7 @@ public class SheetInfo {
     private String gameName;
     private String gameDate;
     private String nextChooser;
+    private List<String> players = new ArrayList<>();
 
     public boolean addItem(final String key, final String value) {
         if (key.startsWith("LAST")) {
@@ -154,6 +157,18 @@ public class SheetInfo {
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+    }
+
+    public List<String> getPlayers() {
+        return players;
+    }
+
+    public void setPlayers(List<String> players) {
+        this.players = players;
+    }
+
+    public void addPlayer(String player) {
+        this.players.add(player);
     }
 
 }

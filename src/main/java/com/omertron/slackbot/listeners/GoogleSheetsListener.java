@@ -32,9 +32,12 @@ import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
 import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
@@ -46,9 +49,22 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     private static final Pattern PAT_SHEETS = Pattern.compile("^\\Qwbb\\E(\\s\\w*)?(\\s.*)?");
     private static final String SS_ID = "1Tbnvj3Colt5CnxlDUNk1L10iANm4jVUvJpD53mjKOYY";
     private static final List<String> CHANNELS = new ArrayList<>();
+    private final Sheets service;
+    private static final Map<String, String> PLAYERS = new HashMap<>();
+    // Sheet ranges
+    private static final String PLAYER_NAMES = "Stats!B4:D14";
+    private static final String NEXT_GAME_DATA = "Stats!R16:S27";
 
     public GoogleSheetsListener() {
-        CHANNELS.add("D40EZ44QZ");
+        CHANNELS.add("D40EZ44QZ"); // bot test
+        CHANNELS.add("G3QQES762"); // WBB channel
+
+        if (!GoogleSheets.isAuthorised()) {
+            GoogleSheets.authorise();
+        }
+        service = GoogleSheets.getSheetsService();
+
+        getStaticData();
     }
 
     @Override
@@ -57,7 +73,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         SlackChannel msgChannel = event.getChannel();
 
         // Check the channel is WBB channel (or test D40EZ44QZ)
-        LOG.info("Chennel ID: {} - {}", msgChannel.getId(), CHANNELS.contains(msgChannel.getId()));
+        LOG.info("Channel ID: {} - {}", msgChannel.getId(), CHANNELS.contains(msgChannel.getId()));
 
         // Filter out the bot's own messages
         if (session.sessionPersona().getId().equals(event.getSender().getId())) {
@@ -69,11 +85,6 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
 
         Matcher m = PAT_SHEETS.matcher(msgContent);
         if (m.matches()) {
-            if (!GoogleSheets.isAuthorised()) {
-                GoogleSheets.authorize();
-            }
-
-            LOG.info("Matched with {} groups", m.groupCount());
             String command = m.group(1) == null ? "HELP" : m.group(1).toUpperCase().trim();
             String params = m.groupCount() > 2 ? m.group(2).trim() : null;
             LOG.info("Command '{}' & params '{}'", command, params);
@@ -94,27 +105,13 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
                 default:
                     session.sendMessage(msgChannel, "Sorry, I don't know that command");
             }
-        } else {
-            LOG.info("Not matched");
         }
     }
 
     private void showNextGame(SlackSession session, SlackChannel msgChannel) {
-        String range = "Stats!R16:S27";
         SheetInfo si = new SheetInfo();
-        ValueRange response;
+        ValueRange response = getResponse(NEXT_GAME_DATA);
 
-        try {
-            Sheets service = GoogleSheets.getSheetsService();
-            response = service.spreadsheets().values()
-                    .get(SS_ID, range)
-                    .execute();
-        } catch (IOException ex) {
-            LOG.info("IO Exception: {}", ex.getMessage(), ex);
-            return;
-        }
-
-        LOG.info("processing response");
         List<List<Object>> values = response.getValues();
         String key, value;
         if (values != null && !values.isEmpty()) {
@@ -128,14 +125,53 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
                     }
                 }
             }
-
-            LOG.info("{}", ToStringBuilder.reflectionToString(si, ToStringStyle.MULTI_LINE_STYLE));
-            SlackAttachment sa = prepSheetInfo(si);
-            session.sendMessage(msgChannel, "", sa);
         }
+
+        response = getResponse("Game Log!F" + si.getLastRow());
+        values = response.getValues();
+        if (values != null && !values.isEmpty()) {
+            List<Object> row = values.get(0);
+            if (row != null && !row.isEmpty()) {
+                String players = row.get(0).toString();
+                for (String p : StringUtils.split(players, ",")) {
+                    if (PLAYERS.containsKey(p)) {
+                        si.addPlayer(PLAYERS.get(p));
+                    } else {
+                        si.addPlayer(p);
+                    }
+                }
+            }
+        }
+
+        LOG.info("{}", ToStringBuilder.reflectionToString(si, ToStringStyle.MULTI_LINE_STYLE));
+        SlackAttachment sa = prepSheetInfo(si);
+        session.sendMessage(msgChannel, "", sa);
 
     }
 
+    /**
+     * Get a range from the spreadsheet
+     *
+     * @param range
+     * @return
+     */
+    private ValueRange getResponse(final String range) {
+        try {
+            return service.spreadsheets().values()
+                    .get(SS_ID, range)
+                    .execute();
+        } catch (IOException ex) {
+            LOG.info("IO Exception: {}", ex.getMessage(), ex);
+        }
+        return null;
+    }
+
+    /**
+     * Generate the next game attachment
+     *
+     * @param sheetInfo
+     * @return
+     */
     private SlackAttachment prepSheetInfo(SheetInfo sheetInfo) {
         SlackAttachment sa = new SlackAttachment();
 
@@ -152,6 +188,27 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         sa.addField("Pin Holder", sheetInfo.getPinHolder(), true);
         sa.addField("Next Chooser", sheetInfo.getNextChooser(), true);
 
+        if (!sheetInfo.getPlayers().isEmpty()) {
+            sa.addField("Players", StringUtils.join(sheetInfo.getPlayers(), "\n"), true);
+        }
+
         return sa;
+    }
+
+    private void getStaticData() {
+        // get the player data
+        ValueRange response = getResponse(PLAYER_NAMES);
+
+        LOG.info("Adding players:");
+        PLAYERS.clear();
+        List<List<Object>> values = response.getValues();
+        if (values != null && !values.isEmpty()) {
+            for (List row : values) {
+                if (row.size() > 0) {
+                    LOG.info("\t{} = {}", row.get(0), row.get(1));
+                    PLAYERS.put(row.get(0).toString(), row.get(1).toString());
+                }
+            }
+        }
     }
 }

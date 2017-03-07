@@ -69,7 +69,7 @@ public class GoogleSheets {
      * @return an authorized Credential object.
      * @throws IOException
      */
-    public static Credential authorize() {
+    public static Credential authorise() {
         if (credential == null) {
             LOG.info("Attempting to authorise");
             try {
