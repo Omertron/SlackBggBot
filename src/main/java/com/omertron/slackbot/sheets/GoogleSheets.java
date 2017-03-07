@@ -19,25 +19,20 @@
  */
 package com.omertron.slackbot.sheets;
 
-import com.omertron.slackbot.model.SheetInfo;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.BatchGetValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
-import java.io.File;
+import com.omertron.slackbot.Constants;
+import com.omertron.slackbot.model.SheetInfo;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,50 +47,21 @@ public class GoogleSheets {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleSheets.class);
     private static final String SS_ID = "1Tbnvj3Colt5CnxlDUNk1L10iANm4jVUvJpD53mjKOYY";
     /**
-     * Application name.
-     */
-    private static final String APPLICATION_NAME
-            = "Google Sheets API Java Quickstart";
-
-    /**
-     * Directory to store user credentials for this application.
-     */
-    private static final java.io.File DATA_STORE_DIR = new java.io.File(
-            System.getProperty("user.home"), ".credentials/sheets.googleapis.com-java-quickstart");
-
-    /**
-     * Global instance of the {@link FileDataStoreFactory}.
-     */
-    private static FileDataStoreFactory DATA_STORE_FACTORY;
-
-    /**
      * Global instance of the JSON factory.
      */
-    private static final JsonFactory JSON_FACTORY
-            = JacksonFactory.getDefaultInstance();
-
+    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     /**
      * Global instance of the HTTP transport.
      */
     private static HttpTransport HTTP_TRANSPORT;
-
     /**
-     * Global instance of the scopes required by this quickstart.
-     *
-     * If modifying these scopes, delete your previously saved credentials at
-     * ~/.credentials/sheets.googleapis.com-java-quickstart
+     * Google credentials
      */
-    private static final List<String> SCOPES
-            = Arrays.asList(SheetsScopes.SPREADSHEETS_READONLY);
-
-    static {
-        try {
-            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            DATA_STORE_FACTORY = new FileDataStoreFactory(DATA_STORE_DIR);
-        } catch (IOException | GeneralSecurityException ex) {
-            LOG.warn("Failed to aithorise!", ex);
-        }
-    }
+    private static GoogleCredential credential = null;
+    /**
+     * Static instance of the sheet
+     */
+    private static Sheets sheets = null;
 
     /**
      * Creates an authorized Credential object.
@@ -103,22 +69,25 @@ public class GoogleSheets {
      * @return an authorized Credential object.
      * @throws IOException
      */
-    public static Credential authorize() throws IOException {
-        // Load client secrets.
-        FileInputStream fis = new FileInputStream(new File("client_secret.json"));
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(fis));
+    public static Credential authorize() {
+        if (credential == null) {
+            LOG.info("Attempting to authorise");
+            try {
+                HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                credential = GoogleCredential.fromStream(new FileInputStream("SlackBggBot-7a8afe5ba1eb.json"))
+                        .createScoped(Arrays.asList(SheetsScopes.SPREADSHEETS_READONLY));
+            } catch (IOException | GeneralSecurityException ex) {
+                LOG.warn("Failed to authorise: {}", ex.getMessage(), ex);
+            }
+        }
 
-        // Build flow and trigger user authorization request.
-        GoogleAuthorizationCodeFlow flow
-                = new GoogleAuthorizationCodeFlow.Builder(
-                        HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                        .setDataStoreFactory(DATA_STORE_FACTORY)
-                        .setAccessType("offline")
-                        .build();
-        Credential credential = new AuthorizationCodeInstalledApp(
-                flow, new LocalServerReceiver()).authorize("user");
-        LOG.info("Credentials saved to " + DATA_STORE_DIR.getAbsolutePath());
+        LOG.info("Authorised!");
         return credential;
+    }
+
+    public static boolean isAuthorised() {
+        LOG.info("Authorised? {}", credential != null);
+        return credential != null;
     }
 
     /**
@@ -127,11 +96,16 @@ public class GoogleSheets {
      * @return an authorized Sheets API client service
      * @throws IOException
      */
-    public static Sheets getSheetsService() throws IOException {
-        Credential credential = authorize();
-        return new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
-                .setApplicationName(APPLICATION_NAME)
-                .build();
+    public static Sheets getSheetsService() {
+        if (sheets == null) {
+            LOG.info("Attempting to get sheet service");
+            sheets = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+                    .setApplicationName(Constants.BOT_NAME)
+                    .build();
+        }
+        
+        LOG.info("Got sheet service");
+        return sheets;
     }
 
     private static final String SS_DATE = "Stats!S26";

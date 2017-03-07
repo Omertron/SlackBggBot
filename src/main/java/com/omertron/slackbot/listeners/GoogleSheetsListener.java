@@ -23,7 +23,7 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.omertron.slackbot.Constants;
 import com.omertron.slackbot.model.SheetInfo;
-import static com.omertron.slackbot.sheets.GoogleSheets.getSheetsService;
+import com.omertron.slackbot.sheets.GoogleSheets;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackSession;
@@ -31,6 +31,7 @@ import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
 import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +45,11 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleSheetsListener.class);
     private static final Pattern PAT_SHEETS = Pattern.compile("^\\Qwbb\\E(\\s\\w*)?(\\s.*)?");
     private static final String SS_ID = "1Tbnvj3Colt5CnxlDUNk1L10iANm4jVUvJpD53mjKOYY";
+    private static final List<String> CHANNELS = new ArrayList<>();
+
+    public GoogleSheetsListener() {
+        CHANNELS.add("D40EZ44QZ");
+    }
 
     @Override
     public void onEvent(SlackMessagePosted event, SlackSession session) {
@@ -51,7 +57,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         SlackChannel msgChannel = event.getChannel();
 
         // Check the channel is WBB channel (or test D40EZ44QZ)
-        LOG.info("Chennel ID: {} - {}", msgChannel.getId(), msgChannel.getName());
+        LOG.info("Chennel ID: {} - {}", msgChannel.getId(), CHANNELS.contains(msgChannel.getId()));
 
         // Filter out the bot's own messages
         if (session.sessionPersona().getId().equals(event.getSender().getId())) {
@@ -60,37 +66,46 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
 
         String msgContent = event.getMessageContent();
         SlackUser msgSender = event.getSender();
-        Matcher m = PAT_SHEETS.matcher(msgContent);
 
+        Matcher m = PAT_SHEETS.matcher(msgContent);
         if (m.matches()) {
+            if (!GoogleSheets.isAuthorised()) {
+                GoogleSheets.authorize();
+            }
+
+            LOG.info("Matched with {} groups", m.groupCount());
             String command = m.group(1) == null ? "HELP" : m.group(1).toUpperCase().trim();
-            String params = m.groupCount() > 1 ? m.group(1).trim() : null;
+            String params = m.groupCount() > 2 ? m.group(2).trim() : null;
+            LOG.info("Command '{}' & params '{}'", command, params);
+
             switch (command) {
                 case "HELP":
                     session.sendMessage(msgChannel, "Will print help");
                     break;
                 case "NEXT":
-                    getNextGame(session, msgChannel);
+                    showNextGame(session, msgChannel);
                     break;
                 case "ADD":
-                    session.sendMessage(msgChannel, "Will attepmt to add " + params + " to the play list");
+                    session.sendMessage(msgChannel, "Will attepmt to add '" + params + "' to the play list");
                     break;
                 case "REMOVE":
-                    session.sendMessage(msgChannel, "Will attepmt to remove " + params + " from the play list");
+                    session.sendMessage(msgChannel, "Will attepmt to remove '" + params + "' from the play list");
                     break;
                 default:
+                    session.sendMessage(msgChannel, "Sorry, I don't know that command");
             }
-
+        } else {
+            LOG.info("Not matched");
         }
     }
 
-    private void getNextGame(SlackSession session, SlackChannel msgChannel) {
+    private void showNextGame(SlackSession session, SlackChannel msgChannel) {
         String range = "Stats!R16:S27";
         SheetInfo si = new SheetInfo();
         ValueRange response;
 
         try {
-            Sheets service = getSheetsService();
+            Sheets service = GoogleSheets.getSheetsService();
             response = service.spreadsheets().values()
                     .get(SS_ID, range)
                     .execute();
@@ -99,6 +114,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
             return;
         }
 
+        LOG.info("processing response");
         List<List<Object>> values = response.getValues();
         String key, value;
         if (values != null && !values.isEmpty()) {
