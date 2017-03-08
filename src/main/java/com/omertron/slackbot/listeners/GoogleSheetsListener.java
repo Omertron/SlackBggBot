@@ -22,11 +22,13 @@ package com.omertron.slackbot.listeners;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.omertron.slackbot.Constants;
+import com.omertron.slackbot.model.HelpInfo;
 import com.omertron.slackbot.model.PlayerInfo;
 import com.omertron.slackbot.model.SheetInfo;
 import com.omertron.slackbot.sheets.GoogleSheets;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
+import com.ullink.slack.simpleslackapi.SlackPreparedMessage;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
@@ -36,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -47,43 +50,74 @@ import org.slf4j.LoggerFactory;
 public class GoogleSheetsListener implements SlackMessagePostedListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(GoogleSheetsListener.class);
-    private static final Pattern PAT_SHEETS = Pattern.compile("^\\Qwbb\\E(\\s\\w*)?(\\s.*)?");
+    private static final Pattern PAT_SHEETS = Pattern.compile("^\\Qwbb\\E(\\s\\w*)?(\\s.*)?", Pattern.CASE_INSENSITIVE);
     private static final String SS_ID = "1Tbnvj3Colt5CnxlDUNk1L10iANm4jVUvJpD53mjKOYY";
     private static final List<String> CHANNELS = new ArrayList<>();
     private final Sheets service;
     private static final Map<String, PlayerInfo> PLAYERS = new HashMap<>();
+    // Help data
+    private static final Map<Integer, HelpInfo> HELP = new TreeMap<>();
+    private static SlackAttachment helpMessage;
     // Sheet ranges
     private static final String PLAYER_NAMES = "Stats!B4:D14";
     private static final String NEXT_GAME_DATA = "Stats!R16:S27";
 
     public GoogleSheetsListener() {
-        CHANNELS.add("D40EZ44QZ"); // bot test
+        // Add the allowed channels
+        CHANNELS.add("G3RU2Q5MG"); // bot test
         CHANNELS.add("G3QQES762"); // WBB channel
 
+        // Attempt to authorise the sheet reader
         if (!GoogleSheets.isAuthorised()) {
             GoogleSheets.authorise();
         }
         service = GoogleSheets.getSheetsService();
 
+        generateHelpMessage();
+
+        // Get the static data
         getStaticData();
+    }
+
+    private void generateHelpMessage() {
+        HELP.clear();
+        // Add the help commands
+        HELP.put(10, new HelpInfo("NEXT", "", "Get information on the next scheduled game for the group", false));
+        HELP.put(20, new HelpInfo("ADD", "Name", "Add *<name>* to the play list for this game.\nIf blank, will add *YOU*", false));
+        HELP.put(30, new HelpInfo("REMOVE", "Name", "Remove *<name>* to the play list for this game.\nIf blank, will remove *YOU*", false));
+        HELP.put(40, new HelpInfo("SET", "Game Name", "Sets the next game to be played to *<Game Name>*", false));
+
+        helpMessage = new SlackAttachment();
+
+        helpMessage.setFallback("Help commads for the bot");
+        
+        StringBuilder text = new StringBuilder("The following commands are available from the game bot for this channel.\n");
+        text.append("These commands should be typed on a line on thier own after 'WBB'.\n")
+                .append("E.G. `WBB NEXT`");
+        
+        helpMessage.setPretext(text.toString());
+        helpMessage.addMarkdownIn("fields");
+        helpMessage.setColor("good");
+
+        for (Map.Entry<Integer, HelpInfo> entry : HELP.entrySet()) {
+            HelpInfo hi = entry.getValue();
+            if (!hi.isAdmin()) {
+                helpMessage.addField(hi.getFormattedCommand(), hi.getMessage(), false);
+            }
+        }
+
     }
 
     @Override
     public void onEvent(SlackMessagePosted event, SlackSession session) {
         // Channel On Which Message Was Posted
         SlackChannel msgChannel = event.getChannel();
-
-        // Check the channel is WBB channel (or test D40EZ44QZ)
-        LOG.info("Channel ID: {} - {}", msgChannel.getId(), CHANNELS.contains(msgChannel.getId()));
-
-        // Filter out the bot's own messages
-        if (session.sessionPersona().getId().equals(event.getSender().getId())) {
+        SlackUser msgSender = event.getSender();
+        if (!authenticate(session, msgChannel, msgSender)) {
             return;
         }
 
         String msgContent = event.getMessageContent();
-        SlackUser msgSender = event.getSender();
-
         Matcher m = PAT_SHEETS.matcher(msgContent);
         if (m.matches()) {
             String command = m.group(1) == null ? "HELP" : m.group(1).toUpperCase().trim();
@@ -92,21 +126,47 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
 
             switch (command) {
                 case "HELP":
-                    session.sendMessage(msgChannel, "Will print help");
+                    session.sendMessage(msgChannel, "", helpMessage);
                     break;
                 case "NEXT":
                     showNextGame(session, msgChannel);
                     break;
-                case "ADD":
-                    session.sendMessage(msgChannel, "Will attepmt to add '" + params + "' to the play list");
-                    break;
-                case "REMOVE":
-                    session.sendMessage(msgChannel, "Will attepmt to remove '" + params + "' from the play list");
-                    break;
                 default:
-                    session.sendMessage(msgChannel, "Sorry, I don't know that command");
+                    session.sendMessage(msgChannel, "Sorry, '" + command + "' is not implemented yet");
             }
         }
+    }
+
+    /**
+     * Check the channel and user to see if the bot has been called from the
+     * correct place(s)
+     *
+     * @param session
+     * @param msgChannel
+     * @param msgSender
+     * @return
+     */
+    private boolean authenticate(SlackSession session, SlackChannel msgChannel, SlackUser msgSender) {
+        // Check the channel is WBB channel (or test D40EZ44QZ)
+        if (!CHANNELS.contains(msgChannel.getId()) && !msgChannel.getId().startsWith("D")) {
+            // Not the right channel
+            LOG.debug("Sheets bot called from invalid channel: {}", msgChannel.getId());
+            return false;
+        }
+
+        // Filter out the bot's own messages
+        return !session.sessionPersona().getId().equals(msgSender.getId());
+    }
+
+    private void showHelp(SlackSession session, SlackChannel msgChannel) {
+        List<SlackAttachment> commands = new ArrayList<>();
+
+        SlackPreparedMessage spm = new SlackPreparedMessage.Builder()
+                .withMessage("The following commands are available from this bot")
+                .withAttachments(commands)
+                .build();
+
+        session.sendMessage(msgChannel, spm);
     }
 
     private void showNextGame(SlackSession session, SlackChannel msgChannel) {

@@ -67,7 +67,8 @@ public class GoogleSheets {
             try {
                 HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
                 credential = GoogleCredential.fromStream(new FileInputStream("SlackBggBot-7a8afe5ba1eb.json"))
-                        .createScoped(Arrays.asList(SheetsScopes.SPREADSHEETS_READONLY));
+                        .createScoped(Arrays.asList(SheetsScopes.SPREADSHEETS));
+//                        .createScoped(Arrays.asList(SheetsScopes.SPREADSHEETS_READONLY));
             } catch (IOException | GeneralSecurityException ex) {
                 LOG.warn("Failed to authorise: {}", ex.getMessage(), ex);
             }

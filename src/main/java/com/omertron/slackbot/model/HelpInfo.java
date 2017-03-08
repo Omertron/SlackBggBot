@@ -95,9 +95,7 @@ public class HelpInfo {
     }
 
     public void addParam(String[] params) {
-        for (String param : params) {
-            this.params.add(param);
-        }
+        this.params.addAll(Arrays.asList(params));
     }
 
     public void addParam(List< String> params) {
