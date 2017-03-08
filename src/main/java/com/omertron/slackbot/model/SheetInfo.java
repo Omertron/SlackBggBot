@@ -21,6 +21,7 @@ package com.omertron.slackbot.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -36,7 +37,7 @@ public class SheetInfo {
     private String gameName;
     private String gameDate;
     private String nextChooser;
-    private List<String> players = new ArrayList<>();
+    private List<PlayerInfo> players = new ArrayList<>();
 
     public boolean addItem(final String key, final String value) {
         if (key.startsWith("LAST")) {
@@ -159,16 +160,32 @@ public class SheetInfo {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
     }
 
-    public List<String> getPlayers() {
+    public List<PlayerInfo> getPlayers() {
         return players;
     }
 
-    public void setPlayers(List<String> players) {
+    public void setPlayers(List<PlayerInfo> players) {
         this.players = players;
     }
 
-    public void addPlayer(String player) {
+    public void addPlayer(PlayerInfo player) {
         this.players.add(player);
+    }
+
+    public String getInitialList() {
+        List<String> list = new ArrayList<>();
+        for (PlayerInfo player : players) {
+            list.add(player.getInitial());
+        }
+        return StringUtils.join(list, ",");
+    }
+
+    public String getNameList() {
+        List<String> list = new ArrayList<>();
+        for (PlayerInfo player : players) {
+            list.add(player.getName());
+        }
+        return StringUtils.join(list, ",");
     }
 
 }
