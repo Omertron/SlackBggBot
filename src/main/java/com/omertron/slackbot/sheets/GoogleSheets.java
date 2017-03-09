@@ -84,10 +84,9 @@ public class GoogleSheets {
     }
 
     /**
-     * Build and return an authorized Sheets API client service.
+     * Build and return an authorised Sheets API client service.
      *
-     * @return an authorized Sheets API client service
-     * @throws IOException
+     * @return an authorised Sheets API client service
      */
     public static Sheets getSheetsService() {
         if (sheets == null) {
