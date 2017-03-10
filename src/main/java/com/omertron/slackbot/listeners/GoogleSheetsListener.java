@@ -137,7 +137,9 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
                     break;
                 case "ADD":
                     addNameToNextGame(session, msgChannel, params, msgSender);
-                    session.sendMessage(msgChannel, "Added '" + params + "' to sheet");
+                    break;
+                case "REMOVE":
+                    removeNameFromNextGame(session, msgChannel, params, msgSender);
                     break;
                 default:
                     session.sendMessage(msgChannel, "Sorry, '" + command + "' is not implemented yet");
@@ -146,8 +148,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     }
 
     /**
-     * Check the channel and user to see if the bot has been called from the
-     * correct place(s)
+     * Check the channel and user to see if the bot has been called from the correct place(s)
      *
      * @param session
      * @param msgChannel
@@ -324,8 +325,15 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         }
     }
 
+    /**
+     * Add a player to the next game's player list
+     *
+     * @param session
+     * @param msgChannel
+     * @param nameToAdd
+     * @param requestor
+     */
     private void addNameToNextGame(SlackSession session, SlackChannel msgChannel, final String nameToAdd, final SlackUser requestor) {
-
         // If we have no sheet informatiom, then populate it
         if (sheetInfo == null) {
             processNextGame();
@@ -347,21 +355,54 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         sheetInfo.addPlayer(pi);
         LOG.info("New player list: {}", sheetInfo.getInitialList());
 
-        List<List<Object>> writeData = new ArrayList<>();
-        List<Object> dataRow = new ArrayList<>();
-        dataRow.add(sheetInfo.getInitialList());
-        writeData.add(dataRow);
-
-        ValueRange vr = new ValueRange().setValues(writeData).setMajorDimension("ROWS");
-        try {
-            String cellRef = RANGE_GAME_ATTENDEES + (sheetInfo.getLastRow() + 1);
-            LOG.info("CellRef: {}", cellRef);
-            service.spreadsheets().values()
-                    .update(SS_ID, cellRef, vr)
-                    .setValueInputOption("RAW")
-                    .execute();
-        } catch (IOException ex) {
-            LOG.warn("IO Exception writing to sheet: {}", ex.getMessage(), ex);
+        // Send the data to the sheet and output a message
+        if (GoogleSheets.writeStringToCell(SS_ID, RANGE_GAME_ATTENDEES + sheetInfo.getLastRow(), sheetInfo.getInitialList())) {
+            String message = String.format("Successfully added '%1$s' (%2$s) to the next game.", pi.getName(), pi.getInitial());
+            session.sendMessage(msgChannel, message);
+        } else {
+            String message = String.format("Failed to add '%1$s' (%2$s) to the next game.", pi.getName(), pi.getInitial());
+            session.sendMessage(msgChannel, message);
         }
     }
+
+    /**
+     * Remove a player from the next game's player list
+     *
+     * @param session
+     * @param msgChannel
+     * @param nameToAdd
+     * @param requestor
+     */
+    private void removeNameFromNextGame(SlackSession session, SlackChannel msgChannel, final String nameToAdd, final SlackUser requestor) {
+        // If we have no sheet informatiom, then populate it
+        if (sheetInfo == null) {
+            processNextGame();
+        }
+
+        LOG.info("Current player list: {}", sheetInfo.getInitialList());
+
+        PlayerInfo pi = decodeName(nameToAdd, requestor);
+
+        if (!sheetInfo.getInitialList().contains(pi.getInitial())) {
+            // Player isn't there anyway!
+            String message = String.format("Player '%1$s' (%2$s) is currently not scheduled to play.", pi.getName(), pi.getInitial());
+            LOG.info(message);
+            session.sendMessage(msgChannel, message);
+            return;
+        }
+
+        // Add the player to the sheet info (so we can use the inital list).
+        sheetInfo.removePlayer(pi);
+        LOG.info("New player list: {}", sheetInfo.getInitialList());
+
+        // Send the data to the sheet and output a message
+        if (GoogleSheets.writeStringToCell(SS_ID, RANGE_GAME_ATTENDEES + sheetInfo.getLastRow(), sheetInfo.getInitialList())) {
+            String message = String.format("Successfully removed '%1$s' (%2$s) from the next game.", pi.getName(), pi.getInitial());
+            session.sendMessage(msgChannel, message);
+        } else {
+            String message = String.format("Failed to remove '%1$s' (%2$s) from the next game.", pi.getName(), pi.getInitial());
+            session.sendMessage(msgChannel, message);
+        }
+    }
+
 }
