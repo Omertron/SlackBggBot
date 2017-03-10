@@ -27,11 +27,14 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
+import com.google.api.services.sheets.v4.model.ValueRange;
 import com.omertron.slackbot.Constants;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +71,6 @@ public class GoogleSheets {
                 HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
                 credential = GoogleCredential.fromStream(new FileInputStream("SlackBggBot-7a8afe5ba1eb.json"))
                         .createScoped(Arrays.asList(SheetsScopes.SPREADSHEETS));
-//                        .createScoped(Arrays.asList(SheetsScopes.SPREADSHEETS_READONLY));
             } catch (IOException | GeneralSecurityException ex) {
                 LOG.warn("Failed to authorise: {}", ex.getMessage(), ex);
             }
@@ -100,4 +102,31 @@ public class GoogleSheets {
         return sheets;
     }
 
+    /**
+     * Write data to the sheet
+     *
+     * @param sheetId The ID of the sheet two write to
+     * @param cellRef The cell to write the data to
+     * @param dataToWrite Data to write
+     * @return True if successful, false otherwise
+     */
+    public static boolean writeStringToCell(final String sheetId, final String cellRef, final String dataToWrite) {
+        List<List<Object>> writeData = new ArrayList<>();
+        List<Object> dataRow = new ArrayList<>();
+        dataRow.add(dataToWrite);
+        writeData.add(dataRow);
+
+        ValueRange vr = new ValueRange().setValues(writeData).setMajorDimension("ROWS");
+        try {
+            LOG.info("Writing '{}' to Cell {}", dataToWrite, cellRef);
+            sheets.spreadsheets().values()
+                    .update(sheetId, cellRef, vr)
+                    .setValueInputOption("RAW")
+                    .execute();
+            return true;
+        } catch (IOException ex) {
+            LOG.warn("IO Exception writing to sheet: {}", ex.getMessage(), ex);
+            return false;
+        }
+    }
 }
