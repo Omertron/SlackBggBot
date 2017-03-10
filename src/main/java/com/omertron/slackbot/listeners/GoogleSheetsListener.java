@@ -32,7 +32,6 @@ import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
 import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +64,13 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     private static final String RANGE_NEXT_GAME_DATA = "Stats!R16:S27";
     private static final String RANGE_GAME_ATTENDEES = "Game Log!F";
 
+    /**
+     * Listens for commands to do with the Wirral Biscuits & Boardgame's Google spreadsheet
+     *
+     * TODO: SET<p>
+     * TODO: WINNER<p>
+     * TODO: get the game log info into an object<p>
+     */
     public GoogleSheetsListener() {
         // Add the allowed channels
         CHANNELS.add("G3RU2Q5MG"); // bot test
@@ -82,6 +88,9 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         getStaticData();
     }
 
+    /**
+     * Create the help message for the bot
+     */
     private void generateHelpMessage() {
         HELP.clear();
         // Add the help commands
@@ -89,6 +98,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         HELP.put(20, new HelpInfo("ADD", "Name", "Add *<name>* to the play list for this game.\nIf blank, will add *YOU*", false));
         HELP.put(30, new HelpInfo("REMOVE", "Name", "Remove *<name>* to the play list for this game.\nIf blank, will remove *YOU*", false));
         HELP.put(40, new HelpInfo("SET", "Game Name", "Sets the next game to be played to *<Game Name>*", false));
+        HELP.put(40, new HelpInfo("WINNER", "Player", "Sets the winner of the game.", false));
 
         helpMessage = new SlackAttachment();
 
@@ -175,7 +185,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
      */
     private void processNextGame() {
         sheetInfo = new SheetInfo();
-        ValueRange response = getSheetData(RANGE_NEXT_GAME_DATA);
+        ValueRange response = GoogleSheets.getSheetData(SS_ID, RANGE_NEXT_GAME_DATA);
 
         List<List<Object>> values = response.getValues();
         String key, value;
@@ -192,7 +202,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
             }
         }
 
-        response = getSheetData(RANGE_GAME_ATTENDEES + sheetInfo.getLastRow());
+        response = GoogleSheets.getSheetData(SS_ID, RANGE_GAME_ATTENDEES + sheetInfo.getLastRow());
         values = response.getValues();
         if (values != null && !values.isEmpty()) {
             List<Object> row = values.get(0);
@@ -209,23 +219,6 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         }
 
         LOG.info("{}", ToStringBuilder.reflectionToString(sheetInfo, ToStringStyle.MULTI_LINE_STYLE));
-    }
-
-    /**
-     * Get a range from the spreadsheet
-     *
-     * @param range
-     * @return
-     */
-    private ValueRange getSheetData(final String range) {
-        try {
-            return service.spreadsheets().values()
-                    .get(SS_ID, range)
-                    .execute();
-        } catch (IOException ex) {
-            LOG.info("IO Exception: {}", ex.getMessage(), ex);
-        }
-        return null;
     }
 
     /**
@@ -263,7 +256,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
      */
     private void getStaticData() {
         // get the player data
-        ValueRange response = getSheetData(RANGE_PLAYER_NAMES);
+        ValueRange response = GoogleSheets.getSheetData(SS_ID, RANGE_PLAYER_NAMES);
 
         LOG.info("Getting players from sheet:");
         PLAYERS.clear();
@@ -283,6 +276,14 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         }
     }
 
+    /**
+     * Attempt to find the user from the parameters passed.<p>
+     * If the name is blank or "me", use the first name of the user from their user profile.
+     *
+     * @param name Name to add
+     * @param user Slack user details to use instead
+     * @return The closest match to the user searched for.
+     */
     private PlayerInfo decodeName(final String name, final SlackUser user) {
         // If blank name, user user details
         if (StringUtils.isBlank(name) || "me".equalsIgnoreCase(name)) {
@@ -296,6 +297,12 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         return findPlayer(name);
     }
 
+    /**
+     * Attempt to find the player in the list of names from the sheet.
+     *
+     * @param search Name to search for
+     * @return The closest match for the search name
+     */
     private PlayerInfo findPlayer(final String search) {
         LOG.info("Searching for player '{}'", search);
 
@@ -320,7 +327,10 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
             LOG.info("No definitive match found for '{}' (best score was {}), using 'Other'", search, bestMatch);
             return PLAYERS.get("O");
         } else {
-            LOG.info("Matched '{}' to '{}' with score of {}", matchedPlayer.getName(), search, bestMatch);
+            LOG.info("Matched '{}' to '{}' with score of {}",
+                    matchedPlayer == null ? "NO MATCH" : matchedPlayer.getName(),
+                    search,
+                    bestMatch);
             return matchedPlayer;
         }
     }

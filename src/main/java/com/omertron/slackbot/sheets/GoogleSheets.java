@@ -105,7 +105,7 @@ public class GoogleSheets {
     /**
      * Write data to the sheet
      *
-     * @param sheetId The ID of the sheet two write to
+     * @param sheetId The ID of the sheet to write to
      * @param cellRef The cell to write the data to
      * @param dataToWrite Data to write
      * @return True if successful, false otherwise
@@ -128,5 +128,24 @@ public class GoogleSheets {
             LOG.warn("IO Exception writing to sheet: {}", ex.getMessage(), ex);
             return false;
         }
+    }
+
+    /**
+     * Get a range from the spreadsheet
+     *
+     * @param sheetId The ID of the sheet to read
+     * @param range The range of cells to read from
+     * @return
+     */
+    public static ValueRange getSheetData(final String sheetId, final String range) {
+        try {
+            LOG.info("Getting information from range {}", range);
+            return sheets.spreadsheets().values()
+                    .get(sheetId, range)
+                    .execute();
+        } catch (IOException ex) {
+            LOG.info("IO Exception: {}", ex.getMessage(), ex);
+        }
+        return null;
     }
 }
