@@ -38,6 +38,9 @@ public class SheetInfo {
     private String gameDate;
     private String nextChooser;
     private List<PlayerInfo> players = new ArrayList<>();
+    // Cached lists
+    private String cachePlayerInitList = null;
+    private String cachePlayerNameList = null;
 
     public boolean addItem(final String key, final String value) {
         if (key.startsWith("LAST")) {
@@ -166,26 +169,64 @@ public class SheetInfo {
 
     public void setPlayers(List<PlayerInfo> players) {
         this.players = players;
+        this.cachePlayerInitList = null;
+        this.cachePlayerNameList = null;
     }
 
     public void addPlayer(PlayerInfo player) {
         this.players.add(player);
+        this.cachePlayerInitList = null;
+        this.cachePlayerNameList = null;
+    }
+
+    public void removePlayer(PlayerInfo player) {
+        this.players.remove(player);
+        this.cachePlayerInitList = null;
+        this.cachePlayerNameList = null;
+    }
+
+    /**
+     * Get a delimited list of the player's initials
+     *
+     * @param delim Delimiter to use (default to "," if null
+     * @return player initials list
+     */
+    public String getInitialList(String delim) {
+        if (cachePlayerInitList == null) {
+            List<String> list = new ArrayList<>();
+            for (PlayerInfo player : players) {
+                list.add(player.getInitial());
+            }
+            cachePlayerInitList = StringUtils.join(list, StringUtils.isBlank(delim) ? "," : delim);
+        }
+
+        return cachePlayerInitList;
     }
 
     public String getInitialList() {
-        List<String> list = new ArrayList<>();
-        for (PlayerInfo player : players) {
-            list.add(player.getInitial());
+        return getInitialList(",");
+    }
+
+    /**
+     * Get a delimited list of the players names
+     *
+     * @param delim Delimiter to use (default to "," if null
+     * @return Player name list
+     */
+    public String getNameList(String delim) {
+        if (cachePlayerNameList == null) {
+            List<String> list = new ArrayList<>();
+            for (PlayerInfo player : players) {
+                list.add(player.getName());
+            }
+            cachePlayerNameList = StringUtils.join(list, StringUtils.isBlank(delim) ? "," : delim);
         }
-        return StringUtils.join(list, ",");
+
+        return cachePlayerNameList;
     }
 
     public String getNameList() {
-        List<String> list = new ArrayList<>();
-        for (PlayerInfo player : players) {
-            list.add(player.getName());
-        }
-        return StringUtils.join(list, ",");
+        return getNameList(",");
     }
 
 }
