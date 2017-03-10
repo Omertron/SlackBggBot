@@ -19,7 +19,6 @@
  */
 package com.omertron.slackbot.sheets;
 
-import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
@@ -59,12 +58,11 @@ public class GoogleSheets {
     private static Sheets sheets = null;
 
     /**
-     * Creates an authorized Credential object.
+     * Creates an authorised Credential object.<p>
+     * Build and return an authorised Sheets API client service.
      *
-     * @return an authorized Credential object.
-     * @throws IOException
      */
-    public static Credential authorise() {
+    public static void initialise() {
         if (credential == null) {
             LOG.info("Attempting to authorise");
             try {
@@ -75,22 +73,8 @@ public class GoogleSheets {
                 LOG.warn("Failed to authorise: {}", ex.getMessage(), ex);
             }
         }
-
         LOG.info("Authorised!");
-        return credential;
-    }
 
-    public static boolean isAuthorised() {
-        LOG.info("Authorised? {}", credential != null);
-        return credential != null;
-    }
-
-    /**
-     * Build and return an authorised Sheets API client service.
-     *
-     * @return an authorised Sheets API client service
-     */
-    public static Sheets getSheetsService() {
         if (sheets == null) {
             LOG.info("Attempting to get sheet service");
             sheets = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
@@ -99,7 +83,12 @@ public class GoogleSheets {
         }
 
         LOG.info("Got sheet service");
-        return sheets;
+
+    }
+
+    public static boolean isAuthorised() {
+        LOG.info("Authorised? {}", credential != null);
+        return credential != null;
     }
 
     /**
@@ -138,8 +127,8 @@ public class GoogleSheets {
      * @return
      */
     public static ValueRange getSheetData(final String sheetId, final String range) {
+        LOG.info("Getting information from range {}", range);
         try {
-            LOG.info("Getting information from range {}", range);
             return sheets.spreadsheets().values()
                     .get(sheetId, range)
                     .execute();
