@@ -20,6 +20,7 @@
 package com.omertron.slackbot.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -197,6 +198,7 @@ public class SheetInfo {
             for (PlayerInfo player : players) {
                 list.add(player.getInitial());
             }
+            Collections.sort(list);
             cachePlayerInitList = StringUtils.join(list, StringUtils.isBlank(delim) ? "," : delim);
         }
 
@@ -219,6 +221,7 @@ public class SheetInfo {
             for (PlayerInfo player : players) {
                 list.add(player.getName());
             }
+            Collections.sort(list);
             cachePlayerNameList = StringUtils.join(list, StringUtils.isBlank(delim) ? "," : delim);
         }
 
