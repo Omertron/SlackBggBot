@@ -99,15 +99,15 @@ public class GoogleSheets {
      * @param dataToWrite Data to write
      * @return True if successful, false otherwise
      */
-    public static boolean writeStringToCell(final String sheetId, final String cellRef, final String dataToWrite) {
+    public static boolean writeValueToCell(final String sheetId, final String cellRef, final String dataToWrite) {
+        LOG.info("Writing '{}' to cell {}", dataToWrite, cellRef);
         List<List<Object>> writeData = new ArrayList<>();
         List<Object> dataRow = new ArrayList<>();
-        dataRow.add(dataToWrite);
+        dataRow.add(dataToWrite == null ? "" : dataToWrite);
         writeData.add(dataRow);
 
         ValueRange vr = new ValueRange().setValues(writeData).setMajorDimension("ROWS");
         try {
-            LOG.info("Writing '{}' to Cell {}", dataToWrite, cellRef);
             sheets.spreadsheets().values()
                     .update(sheetId, cellRef, vr)
                     .setValueInputOption("RAW")

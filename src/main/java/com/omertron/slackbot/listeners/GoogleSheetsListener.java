@@ -19,9 +19,9 @@
  */
 package com.omertron.slackbot.listeners;
 
-import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.omertron.slackbot.Constants;
+import com.omertron.slackbot.model.GameLogRow;
 import com.omertron.slackbot.model.HelpInfo;
 import com.omertron.slackbot.model.PlayerInfo;
 import com.omertron.slackbot.model.SheetInfo;
@@ -37,7 +37,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -52,7 +54,6 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     private static final Pattern PAT_SHEETS = Pattern.compile("^\\Qwbb\\E(\\s\\w*)?(\\s.*)?", Pattern.CASE_INSENSITIVE);
     private static final String SS_ID = "1Tbnvj3Colt5CnxlDUNk1L10iANm4jVUvJpD53mjKOYY";
     private static final List<String> CHANNELS = new ArrayList<>();
-    private final Sheets service;
     private static final Map<String, PlayerInfo> PLAYERS = new HashMap<>();
     // Cached Sheet Information
     private static SheetInfo sheetInfo = null;
@@ -62,7 +63,13 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     // Sheet ranges
     private static final String RANGE_PLAYER_NAMES = "Stats!B4:D14";
     private static final String RANGE_NEXT_GAME_DATA = "Stats!R16:S27";
+    private static final String RANGE_GAME_DATE = "Game Log!A";
+    private static final String RANGE_GAME_NAME = "Game Log!B";
+    private static final String RANGE_GAME_ID = "Game Log!C";
+    private static final String RANGE_GAME_CHOOSER = "Game Log!E";
     private static final String RANGE_GAME_ATTENDEES = "Game Log!F";
+    private static final String RANGE_GAME_WINNERS = "Game Log!G";
+    private static final String RANGE_GAME_OWNER = "Game Log!I";
 
     /**
      * Listens for commands to do with the Wirral Biscuits & Boardgame's Google spreadsheet
@@ -76,11 +83,10 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         CHANNELS.add("G3RU2Q5MG"); // bot test
         CHANNELS.add("G3QQES762"); // WBB channel
 
-        // Attempt to authorise the sheet reader
+        // Attempt to initialise the sheet reader
         if (!GoogleSheets.isAuthorised()) {
-            GoogleSheets.authorise();
+            GoogleSheets.initialise();
         }
-        service = GoogleSheets.getSheetsService();
 
         generateHelpMessage();
 
@@ -151,6 +157,12 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
                 case "REMOVE":
                     removeNameFromNextGame(session, msgChannel, params, msgSender);
                     break;
+                case "SET":
+                    updateGameName(session, msgChannel, params);
+                    break;
+                case "WINNER":
+                    updateWinner(session, msgChannel, params);
+                    break;
                 default:
                     session.sendMessage(msgChannel, "Sorry, '" + command + "' is not implemented yet");
             }
@@ -202,19 +214,11 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
             }
         }
 
-        response = GoogleSheets.getSheetData(SS_ID, RANGE_GAME_ATTENDEES + sheetInfo.getLastRow());
-        values = response.getValues();
-        if (values != null && !values.isEmpty()) {
-            List<Object> row = values.get(0);
-            if (row != null && !row.isEmpty()) {
-                String players = row.get(0).toString();
-                for (String p : StringUtils.split(players, ",")) {
-                    if (PLAYERS.containsKey(p)) {
-                        sheetInfo.addPlayer(PLAYERS.get(p));
-                    } else {
-                        sheetInfo.addPlayer(new PlayerInfo(p, "UNKNOWN"));
-                    }
-                }
+        GameLogRow row = readGameLogRow(sheetInfo.getLastRow());
+        if (row.getAttendees() != null) {
+            String players = row.getAttendees();
+            for (String p : StringUtils.split(players, ",")) {
+                sheetInfo.addPlayer(findPlayer(p));
             }
         }
 
@@ -238,11 +242,11 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         }
         sa.setAuthorName("Chosen by " + sheetInfo.getGameChooser());
 
-        sa.setText("Next game night is " + sheetInfo.getGameDate());
+        sa.setText("Next game night is " + sheetInfo.getFormattedDate("EEEE, dd MMMM"));
         sa.setThumbUrl(sheetInfo.getGameImageUrl());
 
         if (!sheetInfo.getPlayers().isEmpty()) {
-            sa.addField("Attendees", sheetInfo.getNameList(), true);
+            sa.addField("Attendees", sheetInfo.getNameList(", "), true);
         }
 
         sa.addField("Pin Holder", sheetInfo.getPinHolder(), true);
@@ -303,7 +307,8 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
      * @param search Name to search for
      * @return The closest match for the search name
      */
-    private PlayerInfo findPlayer(final String search) {
+    private PlayerInfo findPlayer(final String player) {
+        String search = StringUtils.trimToEmpty(player).toUpperCase();
         LOG.info("Searching for player '{}'", search);
 
         if (PLAYERS.containsKey(search)) {
@@ -366,7 +371,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         LOG.info("New player list: {}", sheetInfo.getInitialList());
 
         // Send the data to the sheet and output a message
-        if (GoogleSheets.writeStringToCell(SS_ID, RANGE_GAME_ATTENDEES + sheetInfo.getLastRow(), sheetInfo.getInitialList())) {
+        if (GoogleSheets.writeValueToCell(SS_ID, RANGE_GAME_ATTENDEES + sheetInfo.getLastRow(), sheetInfo.getInitialList())) {
             String message = String.format("Successfully added '%1$s' (%2$s) to the next game.", pi.getName(), pi.getInitial());
             session.sendMessage(msgChannel, message);
         } else {
@@ -406,7 +411,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         LOG.info("New player list: {}", sheetInfo.getInitialList());
 
         // Send the data to the sheet and output a message
-        if (GoogleSheets.writeStringToCell(SS_ID, RANGE_GAME_ATTENDEES + sheetInfo.getLastRow(), sheetInfo.getInitialList())) {
+        if (GoogleSheets.writeValueToCell(SS_ID, RANGE_GAME_ATTENDEES + sheetInfo.getLastRow(), sheetInfo.getInitialList())) {
             String message = String.format("Successfully removed '%1$s' (%2$s) from the next game.", pi.getName(), pi.getInitial());
             session.sendMessage(msgChannel, message);
         } else {
@@ -415,4 +420,83 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         }
     }
 
+    /**
+     * Read a row of the game log
+     *
+     * @param row Row to read
+     * @return Values in an object
+     */
+    private GameLogRow readGameLogRow(int row) {
+        String sheetRow = String.format("Game Log!A%1$d:I%1$d", row);
+        LOG.info("Getting data from '{}'", sheetRow);
+        ValueRange vr = GoogleSheets.getSheetData(SS_ID, sheetRow);
+        return (new GameLogRow(vr));
+    }
+
+    /**
+     * Update the game name<p>
+     * Blank or null will clear the game name
+     *
+     * @param session
+     * @param msgChannel
+     * @param gameName
+     */
+    private void updateGameName(SlackSession session, SlackChannel msgChannel, final String gameName) {
+        LOG.info("Updating game name from '{}' to '{}'", sheetInfo.getGameName(), gameName);
+
+        String message;
+        // Send the data to the sheet and output a message
+        if (GoogleSheets.writeValueToCell(SS_ID, RANGE_GAME_NAME + sheetInfo.getLastRow(), gameName)) {
+            if (StringUtils.isBlank(gameName)) {
+                message = "Successfully cleared the game name";
+            } else {
+                message = String.format("Successfully updated the game name to '%1$s'.", gameName);
+            }
+        } else {
+            message = String.format("Failed to update the game name to '%1$s'.", gameName);
+        }
+        session.sendMessage(msgChannel, message);
+    }
+
+    /**
+     * Add/Update the winner(s) to the sheet<p>
+     * Blank or null will clear the winners.
+     *
+     * @param session
+     * @param msgChannel
+     * @param winner
+     */
+    private void updateWinner(SlackSession session, SlackChannel msgChannel, final String winner) {
+        String message;
+        boolean success;
+
+        if (StringUtils.isBlank(winner)) {
+            // Blank will clear the winner value
+            success = GoogleSheets.writeValueToCell(SS_ID, RANGE_GAME_WINNERS + sheetInfo.getLastRow(), "");
+            message = "Cleared the winner from the game";
+        } else if (winner.contains(",")) {
+            // Winner contains multiple people, so process accordingly
+            Set<String> initials = new TreeSet<>();
+            // Split the given list
+            for (String value : StringUtils.split(winner, ",")) {
+                initials.add(findPlayer(value).getInitial());
+            }
+
+            String initList = StringUtils.join(initials, ",");
+            success = GoogleSheets.writeValueToCell(SS_ID, RANGE_GAME_WINNERS + sheetInfo.getLastRow(), initList);
+            message = String.format("Successfully updated the winners to '%1$s'.", initList);
+        } else {
+            // Assume a single winner
+            PlayerInfo player = findPlayer(winner);
+            LOG.info("Setting winner to '{}' ({})", player.getName(), player.getInitial());
+            success = GoogleSheets.writeValueToCell(SS_ID, RANGE_GAME_WINNERS + sheetInfo.getLastRow(), player.getInitial());
+            message = String.format("Successfully updated the winner to '%1$s' (%2$s).", player.getName(), player.getInitial());
+        }
+
+        // Send the data to the sheet and output a message
+        if (!success) {
+            message = String.format("Failed to update the winner to '%1$s'.", winner);
+        }
+        session.sendMessage(msgChannel, message);
+    }
 }

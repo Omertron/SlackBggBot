@@ -19,16 +19,23 @@
  */
 package com.omertron.slackbot.model;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SheetInfo {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SheetInfo.class);
     private int lastRow;
     private int nextGameId;
     private String gameImageUrl;
@@ -36,7 +43,7 @@ public class SheetInfo {
     private String pinHolder;
     private String gameChooser;
     private String gameName;
-    private String gameDate;
+    private Date gameDate;
     private String nextChooser;
     private List<PlayerInfo> players = new ArrayList<>();
     // Cached lists
@@ -77,7 +84,14 @@ public class SheetInfo {
             return true;
         }
         if (key.startsWith("NEXT DATE")) {
-            gameDate = value;
+//            gameDate = value;
+
+            try {
+                gameDate = DateUtils.parseDate(value.substring(5), "dd MMM yy");
+            } catch (ParseException ex) {
+                LOG.info("Failed to parse date: '{}'", ex.getMessage());
+            }
+
             return true;
         }
         if (key.startsWith("NEXT CHOOSER")) {
@@ -143,11 +157,15 @@ public class SheetInfo {
         this.gameName = gameName;
     }
 
-    public String getGameDate() {
-        return gameDate;
+    public String getFormattedDate() {
+        return getFormattedDate("dd MMM yy");
+    }
+    
+    public String getFormattedDate(String format) {
+        return DateFormatUtils.format(gameDate, format);
     }
 
-    public void setGameDate(String gameDate) {
+    public void setGameDate(Date gameDate) {
         this.gameDate = gameDate;
     }
 
