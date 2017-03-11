@@ -101,10 +101,12 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         HELP.clear();
         // Add the help commands
         HELP.put(10, new HelpInfo("NEXT", "", "Get information on the next scheduled game for the group", false));
-        HELP.put(20, new HelpInfo("ADD", "Name", "Add *<name>* to the play list for this game.\nIf blank, will add *YOU*", false));
-        HELP.put(30, new HelpInfo("REMOVE", "Name", "Remove *<name>* to the play list for this game.\nIf blank, will remove *YOU*", false));
-        HELP.put(40, new HelpInfo("SET", "Game Name", "Sets the next game to be played to *<Game Name>*", false));
-        HELP.put(40, new HelpInfo("WINNER", "Player", "Sets the winner of the game.", false));
+        HELP.put(21, new HelpInfo("CHOOSER", "Name", "Set *<name>* to be the chooser for the next game.\nIf blank, will clear the chooser.", false));
+        HELP.put(22, new HelpInfo("ADD", "Name", "Add *<name>* to the play list for this game.\nIf blank, will add *YOU*", false));
+        HELP.put(23, new HelpInfo("REMOVE", "Name", "Remove *<name>* to the play list for this game.\nIf blank, will remove *YOU*", false));
+        HELP.put(24, new HelpInfo("OWNER", "Name", "Set *<name>* to be the owner of the game.\nIf blank, will clear the current name", false));
+        HELP.put(31, new HelpInfo("SET", "Game Name", "Sets the next game to be played to *<Game Name>*\nIf blank, will clear the current game name", false));
+        HELP.put(32, new HelpInfo("WINNER", "Player", "Sets the winner of the game.\nIf blank, will clear the current winners.\nCan be multiple names comma separated.", false));
 
         helpMessage = new SlackAttachment();
 
@@ -161,7 +163,13 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
                     updateGameName(session, msgChannel, params);
                     break;
                 case "WINNER":
-                    updateWinner(session, msgChannel, params);
+                    updateGenericPlayer(session, msgChannel, RANGE_GAME_WINNERS, params, "winner", true);
+                    break;
+                case "OWNER":
+                    updateGenericPlayer(session, msgChannel, RANGE_GAME_OWNER, params, "owner", false);
+                    break;
+                case "CHOOSER":
+                    updateGenericPlayer(session, msgChannel, RANGE_GAME_CHOOSER, params, "chooser", false);
                     break;
                 default:
                     session.sendMessage(msgChannel, "Sorry, '" + command + "' is not implemented yet");
@@ -459,44 +467,61 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     }
 
     /**
-     * Add/Update the winner(s) to the sheet<p>
-     * Blank or null will clear the winners.
+     * Method to update the sheet with a player or players for a given cell
      *
      * @param session
      * @param msgChannel
-     * @param winner
+     * @param value
+     * @param updateType
+     * @param useInitials
      */
-    private void updateWinner(SlackSession session, SlackChannel msgChannel, final String winner) {
+    private void updateGenericPlayer(SlackSession session, SlackChannel msgChannel,
+            final String cellRef,
+            final String value,
+            final String updateType,
+            boolean useInitials) {
         String message;
         boolean success;
 
-        if (StringUtils.isBlank(winner)) {
-            // Blank will clear the winner value
-            success = GoogleSheets.writeValueToCell(SS_ID, RANGE_GAME_WINNERS + sheetInfo.getLastRow(), "");
-            message = "Cleared the winner from the game";
-        } else if (winner.contains(",")) {
-            // Winner contains multiple people, so process accordingly
-            Set<String> initials = new TreeSet<>();
+        if (StringUtils.isBlank(value)) {
+            // Blank will clear the current cell
+            success = GoogleSheets.writeValueToCell(SS_ID, cellRef + sheetInfo.getLastRow(), "");
+            message = String.format("Cleared the %1$s from the game", updateType);
+        } else if (value.contains(",")) {
+            // Value contains multiple people, so process accordingly
+            Set<String> nameList = new TreeSet<>();
             // Split the given list
-            for (String value : StringUtils.split(winner, ",")) {
-                initials.add(findPlayer(value).getInitial());
+            for (String name : StringUtils.split(value, ",")) {
+                PlayerInfo pi = findPlayer(name);
+                if (useInitials) {
+                    nameList.add(pi.getInitial());
+                } else {
+                    nameList.add(pi.getName());
+                }
             }
 
-            String initList = StringUtils.join(initials, ",");
-            success = GoogleSheets.writeValueToCell(SS_ID, RANGE_GAME_WINNERS + sheetInfo.getLastRow(), initList);
-            message = String.format("Successfully updated the winners to '%1$s'.", initList);
+            String concatNames = StringUtils.join(nameList, ",");
+            success = GoogleSheets.writeValueToCell(SS_ID, cellRef + sheetInfo.getLastRow(), concatNames);
+            message = String.format("Successfully updated the %1$s to '%2$s'.", updateType, concatNames);
         } else {
-            // Assume a single winner
-            PlayerInfo player = findPlayer(winner);
-            LOG.info("Setting winner to '{}' ({})", player.getName(), player.getInitial());
-            success = GoogleSheets.writeValueToCell(SS_ID, RANGE_GAME_WINNERS + sheetInfo.getLastRow(), player.getInitial());
-            message = String.format("Successfully updated the winner to '%1$s' (%2$s).", player.getName(), player.getInitial());
+            // Assume a single person 
+            PlayerInfo player = findPlayer(value);
+            LOG.info("Setting {} to '{}' ({})", updateType, player.getName(), player.getInitial());
+            String playerValue;
+            if (useInitials) {
+                playerValue = player.getInitial();
+            } else {
+                playerValue = player.getName();
+            }
+            success = GoogleSheets.writeValueToCell(SS_ID, cellRef + sheetInfo.getLastRow(), playerValue);
+            message = String.format("Successfully updated the %1$s to '%2$s' (%3$s).", updateType, player.getName(), player.getInitial());
         }
 
         // Send the data to the sheet and output a message
         if (!success) {
-            message = String.format("Failed to update the winner to '%1$s'.", winner);
+            message = String.format("Failed to update the %1$s to '%2$s'.", updateType, value);
         }
         session.sendMessage(msgChannel, message);
     }
+
 }
