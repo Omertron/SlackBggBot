@@ -100,15 +100,6 @@ public class SlackBot {
         LOG.info("Checking for users welcomed list");
         BotWelcome.readFile();
         
-        SlackChannel channel = session.findChannelByName("general");
-        for (SlackUser user : session.getUsers()) {
-            if (user.isBot() || "slackbot".equalsIgnoreCase(user.getUserName())) {
-                continue;
-            }
-            LOG.info("\tAttempting to welcome '{}'", user.getUserName());
-            BotWelcome.sendWelcomeMessage(session, channel, user);
-        }
-        
         LOG.info("Checking for stats file");
         BotStatistics.readFile();
         LOG.info("Stats read:\n{}", BotStatistics.generateStatistics(false, true));
