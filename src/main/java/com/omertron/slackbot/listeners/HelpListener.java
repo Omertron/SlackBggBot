@@ -26,6 +26,7 @@ import com.omertron.slackbot.SlackBot;
 import com.omertron.slackbot.enumeration.StatCategory;
 import com.omertron.slackbot.model.HelpInfo;
 import com.omertron.slackbot.stats.BotStatistics;
+import com.omertron.slackbot.stats.BotWelcome;
 import com.omertron.slackbot.utils.GitRepositoryState;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
@@ -82,8 +83,18 @@ public class HelpListener implements SlackMessagePostedListener {
         String msgContent = event.getMessageContent();
         SlackUser msgSender = event.getSender();
 
-        // Filter out the bot's own messages
-        if (session.sessionPersona().getId().equals(event.getSender().getId())) {
+        // Filter out the bot's own messages or messages from other bots
+        if (session.sessionPersona().getId().equals(event.getSender().getId()) || event.getSender().isBot()) {
+            return;
+        }
+
+        if (event.getMessageSubType() == SlackMessagePosted.MessageSubType.CHANNEL_JOIN
+                || event.getMessageSubType() == SlackMessagePosted.MessageSubType.GROUP_JOIN) {
+
+            // Send a welcome message (will not re-send if already sent)
+            BotWelcome.sendWelcomeMessage(session, msgChannel, msgSender);
+
+            // No need to continue, so return
             return;
         }
 
@@ -263,4 +274,5 @@ public class HelpListener implements SlackMessagePostedListener {
 
         return aboutMessage;
     }
+
 }

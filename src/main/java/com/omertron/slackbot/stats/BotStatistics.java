@@ -21,6 +21,7 @@ package com.omertron.slackbot.stats;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.omertron.slackbot.Constants;
 import com.omertron.slackbot.enumeration.StatCategory;
 import com.omertron.slackbot.model.StatHolder;
@@ -47,6 +48,7 @@ public final class BotStatistics {
         for (StatCategory stat : StatCategory.values()) {
             STATISTICS.put(stat, new StatHolder(stat));
         }
+        MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
     private BotStatistics() {
@@ -139,23 +141,29 @@ public final class BotStatistics {
 
     public static void writeFile() {
         try {
-            MAPPER.writeValue(new File(Constants.STAT_FILENAME), STATISTICS);
+            MAPPER.writeValue(new File(Constants.FILENAME_STAT), STATISTICS);
         } catch (IOException ex) {
-            LOG.warn("Failed to write stats to {}", Constants.STAT_FILENAME, ex);
+            LOG.warn("Failed to write stats to {}", Constants.FILENAME_STAT, ex);
         }
     }
 
     public static void readFile() {
+        File f = new File(Constants.FILENAME_STAT);
+        if (!f.exists()) {
+            LOG.info("File '{}' was not found.", Constants.FILENAME_STAT);
+            return;
+        }
+
         try {
-            File f = new File(Constants.STAT_FILENAME);
             TypeReference<EnumMap<StatCategory, StatHolder>> typeRef = new TypeReference<EnumMap<StatCategory, StatHolder>>() {
             };
             Map<StatCategory, StatHolder> readObj = MAPPER.readValue(f, typeRef);
 
             STATISTICS.clear();
             STATISTICS.putAll(readObj);
+            LOG.info("File '{}' was read successfully.", Constants.FILENAME_STAT);
         } catch (IOException ex) {
-            LOG.warn("Failed to read stats from {}", Constants.STAT_FILENAME, ex);
+            LOG.warn("Failed to read stats from {}", Constants.FILENAME_STAT, ex);
         }
     }
 }

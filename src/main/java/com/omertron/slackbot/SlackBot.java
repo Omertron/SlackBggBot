@@ -23,11 +23,13 @@ import com.omertron.slackbot.listeners.BoardGameListener;
 import com.omertron.slackbot.listeners.GoogleSheetsListener;
 import com.omertron.slackbot.listeners.HelpListener;
 import com.omertron.slackbot.stats.BotStatistics;
+import com.omertron.slackbot.stats.BotWelcome;
 import com.omertron.slackbot.utils.PropertyUtils;
+import com.ullink.slack.simpleslackapi.SlackChannel;
+import com.ullink.slack.simpleslackapi.SlackPersona;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory;
-import java.io.File;
 import java.net.Proxy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -45,7 +47,7 @@ public class SlackBot {
     private static final Logger LOG = LoggerFactory.getLogger(SlackBot.class);
     private static final Properties PROPS = new Properties();
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
-    private static final List<String> BOT_ADMINS = new ArrayList<>();
+    private static final List<SlackUser> BOT_ADMINS = new ArrayList<>();
     
     private SlackBot() {
         // No need for a constructor in the main class
@@ -95,20 +97,27 @@ public class SlackBot {
                 LOG.info("\tThere are {} BOT admins: {}", BOT_ADMINS.size(), StringUtils.join(BOT_ADMINS, ","));
         }
         
-        LOG.info("Checking for stats file");
-        File f = new File(Constants.STAT_FILENAME);
-        if (f.exists()) {
-            LOG.info("\tReading stats file");
-            BotStatistics.readFile();
+        LOG.info("Checking for users welcomed list");
+        BotWelcome.readFile();
+        
+        SlackChannel channel = session.findChannelByName("general");
+        for (SlackUser user : session.getUsers()) {
+            if (user.isBot() || "slackbot".equalsIgnoreCase(user.getUserName())) {
+                continue;
+            }
+            LOG.info("\tAttempting to welcome '{}'", user.getUserName());
+            BotWelcome.sendWelcomeMessage(session, channel, user);
         }
+        
+        LOG.info("Checking for stats file");
+        BotStatistics.readFile();
         LOG.info("Stats read:\n{}", BotStatistics.generateStatistics(false, true));
         
         Thread.sleep(Long.MAX_VALUE);
     }
 
     /**
-     * Send a start up message to all BOT admins to inform them of the bot's
-     * restart
+     * Send a start up message to all BOT admins to inform them of the bot's restart
      *
      * @param session
      */
@@ -117,16 +126,15 @@ public class SlackBot {
         DateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
         df.setTimeZone(tz);
         
-        String message = Constants.BOT_NAME + " started at " + df.format(new Date());
-        LOG.info("  {}", message);
-        
-        for (String username : BOT_ADMINS) {
-            SlackUser user = session.findUserByUserName(username);
-            if (user != null) {
-                session.sendMessageToUser(user, message, null);
-            } else {
-                LOG.warn("  Admin user '{}' was not found.", username);
-            }
+        String message = String.format("%1$s started at %2$s", Constants.BOT_NAME, df.format(new Date()));
+        messageAdmins(session, message);
+    }
+    
+    public static void messageAdmins(SlackSession session, String message) {
+        LOG.info("Sending message to admins: '{}'", message);
+        for (SlackUser user : BOT_ADMINS) {
+            LOG.info("\tSent to '{}'", user.getUserName());
+            session.sendMessageToUser(user, message, null);
         }
     }
 
@@ -145,23 +153,21 @@ public class SlackBot {
                 if (sUser != null) {
                     LOG.info("Adding {} ({}) to {} admins", sUser.getUserName(), sUser.getRealName(), Constants.BOT_NAME);
                     // Add the uername to the list
-                    BOT_ADMINS.add(sUser.getUserName());
+                    BOT_ADMINS.add(sUser);
                 } else {
                     LOG.warn("Username '{}' was not found in the list of slack users!", user);
                 }
             }
         }
-        
     }
 
     /**
-     * Determine if the username is one of the BOT administrators
+     * List of the bot admins
      *
-     * @param username
-     * @return
+     * @return admin names
      */
-    public static boolean isBotAdmin(String username) {
-        return BOT_ADMINS.contains(username);
+    public static List<SlackUser> getBotAdmins() {
+        return BOT_ADMINS;
     }
 
     /**
@@ -171,6 +177,57 @@ public class SlackBot {
      * @return
      */
     public static boolean isBotAdmin(SlackUser user) {
-        return BOT_ADMINS.contains(user.getUserName());
+        return BOT_ADMINS.contains(user);
     }
+
+    /**
+     * Create a formatted username string
+     *
+     * @param persona
+     * @return
+     */
+    public static String formatUsernameLink(SlackPersona persona) {
+        return formatLink("@", persona.getId(), persona.getUserName());
+    }
+
+    /**
+     * Create a formatted channel string
+     *
+     * @param channel
+     * @return
+     */
+    public static String formatChannelLink(SlackChannel channel) {
+        return formatLink("#", channel.getId(), channel.getName());
+    }
+
+    /**
+     * Format a link
+     *
+     * @param marker
+     * @param id
+     * @param text
+     * @return
+     */
+    private static String formatLink(String marker, String id, String text) {
+        StringBuilder formatted = new StringBuilder();
+        
+        formatted.append("<").append(marker)
+                .append(id)
+                .append("|")
+                .append(text)
+                .append(">");
+        return formatted.toString();
+    }
+
+    /**
+     * Get a property from the list
+     *
+     * @param key
+     * @param defaultValue
+     * @return
+     */
+    public static String getProperty(String key, String defaultValue) {
+        return PROPS.getProperty(key, defaultValue);
+    }
+    
 }
