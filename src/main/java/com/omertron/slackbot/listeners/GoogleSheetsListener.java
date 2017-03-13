@@ -72,7 +72,8 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     private static final String RANGE_GAME_OWNER = "Game Log!I";
 
     /**
-     * Listens for commands to do with the Wirral Biscuits & Boardgame's Google spreadsheet
+     * Listens for commands to do with the Wirral Biscuits & Boardgame's Google
+     * spreadsheet
      *
      * TODO: SET<p>
      * TODO: WINNER<p>
@@ -178,7 +179,8 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     }
 
     /**
-     * Check the channel and user to see if the bot has been called from the correct place(s)
+     * Check the channel and user to see if the bot has been called from the
+     * correct place(s)
      *
      * @param session
      * @param msgChannel
@@ -245,7 +247,9 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         if (sheetInfo.getNextGameId() > 0) {
             sa.setTitle(sheetInfo.getGameName());
             sa.setTitleLink(Constants.BGG_GAME_LINK + sheetInfo.getNextGameId());
+            sa.setFallback(sheetInfo.getGameName() + " for " + sheetInfo.getFormattedDate("EEE dd MMM"));
         } else {
+            sa.setFallback("No game chosen for " + sheetInfo.getFormattedDate("EEE dd MMM"));
             sa.setTitle(sheetInfo.getGameChooser() + " has not chosen a game yet");
         }
         sa.setAuthorName("Chosen by " + sheetInfo.getGameChooser());
@@ -290,7 +294,8 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
 
     /**
      * Attempt to find the user from the parameters passed.<p>
-     * If the name is blank or "me", use the first name of the user from their user profile.
+     * If the name is blank or "me", use the first name of the user from their
+     * user profile.
      *
      * @param name Name to add
      * @param user Slack user details to use instead
