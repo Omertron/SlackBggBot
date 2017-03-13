@@ -43,6 +43,7 @@ public class GameLogRow {
     private String owner;
 
     public GameLogRow() {
+        // Create an empty object
     }
 
     public GameLogRow(ValueRange valueRange) {
@@ -58,7 +59,7 @@ public class GameLogRow {
         if (valueRange.getValues() != null && !valueRange.getValues().isEmpty()) {
             List<Object> row = valueRange.getValues().get(0);
 
-            if (row.size() >= 1) {
+            if (!row.isEmpty()) {
                 try {
                     this.date = DateUtils.parseDate(row.get(0).toString().substring(5), "dd MMM yy");
                 } catch (ParseException ex) {
@@ -91,11 +92,11 @@ public class GameLogRow {
     public Date getDate() {
         return date;
     }
-    
+
     public String getFormattedDate() {
         return getFormattedDate("dd MMM yy");
     }
-    
+
     public String getFormattedDate(String format) {
         return DateFormatUtils.format(date, format);
     }

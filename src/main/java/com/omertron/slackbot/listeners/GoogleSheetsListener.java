@@ -63,9 +63,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     // Sheet ranges
     private static final String RANGE_PLAYER_NAMES = "Stats!B4:D14";
     private static final String RANGE_NEXT_GAME_DATA = "Stats!R16:S27";
-    private static final String RANGE_GAME_DATE = "Game Log!A";
     private static final String RANGE_GAME_NAME = "Game Log!B";
-    private static final String RANGE_GAME_ID = "Game Log!C";
     private static final String RANGE_GAME_CHOOSER = "Game Log!E";
     private static final String RANGE_GAME_ATTENDEES = "Game Log!F";
     private static final String RANGE_GAME_WINNERS = "Game Log!G";
@@ -75,9 +73,6 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
      * Listens for commands to do with the Wirral Biscuits & Boardgame's Google
      * spreadsheet
      *
-     * TODO: SET<p>
-     * TODO: WINNER<p>
-     * TODO: get the game log info into an object<p>
      */
     public GoogleSheetsListener() {
         // Add the allowed channels
@@ -106,7 +101,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         HELP.put(22, new HelpInfo("ADD", "Name", "Add *<name>* to the play list for this game.\nIf blank, will add *YOU*", false));
         HELP.put(23, new HelpInfo("REMOVE", "Name", "Remove *<name>* to the play list for this game.\nIf blank, will remove *YOU*", false));
         HELP.put(24, new HelpInfo("OWNER", "Name", "Set *<name>* to be the owner of the game.\nIf blank, will clear the current name", false));
-        HELP.put(31, new HelpInfo("SET", "Game Name", "Sets the next game to be played to *<Game Name>*\nIf blank, will clear the current game name", false));
+        HELP.put(31, new HelpInfo("GAME", "Game Name", "Sets the next game to be played to *<Game Name>*\nIf blank, will clear the current game name", false));
         HELP.put(32, new HelpInfo("WINNER", "Player", "Sets the winner of the game.\nIf blank, will clear the current winners.\nCan be multiple names comma separated.", false));
 
         helpMessage = new SlackAttachment();
@@ -160,7 +155,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
                 case "REMOVE":
                     removeNameFromNextGame(session, msgChannel, params, msgSender);
                     break;
-                case "SET":
+                case "GAME":
                     updateGameName(session, msgChannel, params);
                     break;
                 case "WINNER":
@@ -213,7 +208,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         String key, value;
         if (values != null && !values.isEmpty()) {
             for (List row : values) {
-                if (row.size() > 0) {
+                if (!row.isEmpty()) {
                     key = row.get(0).toString().toUpperCase();
                     value = row.size() > 1 ? row.get(1).toString() : null;
                     LOG.info("{}\t=\t\t'{}'", key, value);
@@ -280,7 +275,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         if (values != null && !values.isEmpty()) {
             PlayerInfo pi;
             for (List row : values) {
-                if (row.size() > 0) {
+                if (!row.isEmpty()) {
                     pi = new PlayerInfo(row.get(0).toString(), row.get(1).toString());
                     if (row.size() > 2) {
                         pi.setBggUsername(row.get(2).toString());
@@ -443,7 +438,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         String sheetRow = String.format("Game Log!A%1$d:I%1$d", row);
         LOG.info("Getting data from '{}'", sheetRow);
         ValueRange vr = GoogleSheets.getSheetData(SS_ID, sheetRow);
-        return (new GameLogRow(vr));
+        return new GameLogRow(vr);
     }
 
     /**

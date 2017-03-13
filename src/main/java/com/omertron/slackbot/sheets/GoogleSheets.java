@@ -57,6 +57,10 @@ public class GoogleSheets {
      */
     private static Sheets sheets = null;
 
+    private GoogleSheets() {
+        throw new UnsupportedOperationException("Static class");
+    }
+
     /**
      * Creates an authorised Credential object.<p>
      * Build and return an authorised Sheets API client service.

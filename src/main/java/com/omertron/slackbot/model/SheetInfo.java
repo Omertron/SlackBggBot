@@ -84,8 +84,6 @@ public class SheetInfo {
             return true;
         }
         if (key.startsWith("NEXT DATE")) {
-//            gameDate = value;
-
             try {
                 gameDate = DateUtils.parseDate(value.substring(5), "dd MMM yy");
             } catch (ParseException ex) {
