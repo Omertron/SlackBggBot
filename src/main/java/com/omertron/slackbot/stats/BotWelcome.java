@@ -30,8 +30,12 @@ import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +48,7 @@ import org.slf4j.LoggerFactory;
 public final class BotWelcome {
 
     private static final Logger LOG = LoggerFactory.getLogger(BotWelcome.class);
-    private static final Set<String> USER_LIST = new HashSet<>();
+    private static final Map<String, String> USER_LIST = new HashMap<>();
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     static {
@@ -62,7 +66,7 @@ public final class BotWelcome {
      * @return
      */
     public static synchronized boolean isOnList(String username) {
-        return USER_LIST.contains(username);
+        return USER_LIST.containsKey(username);
     }
 
     /**
@@ -82,8 +86,13 @@ public final class BotWelcome {
      * @param username
      */
     public static synchronized void addUser(String username) {
-        LOG.info("Adding '{}' to the welcomed list", username);
-        USER_LIST.add(username);
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        df.setTimeZone(tz);
+
+        String dateString = df.format(new Date());
+        LOG.info("Adding '{}' to the welcomed list on {}", username, dateString);
+        USER_LIST.put(username, dateString);
         // Save the file
         writeFile();
     }
@@ -136,7 +145,7 @@ public final class BotWelcome {
         // Send admins a message
         SlackBot.messageAdmins(session, String.format("Sent welcome message to %1$s",
                 SlackBot.formatUsernameLink(msgSender)));
-        
+
         // Add user to welcomed list
         BotWelcome.addUser(msgSender.getUserName());
     }
@@ -179,15 +188,64 @@ public final class BotWelcome {
         }
 
         try {
-            TypeReference<HashSet<String>> typeRef = new TypeReference<HashSet<String>>() {
+            TypeReference<HashMap<String, String>> typeRef = new TypeReference<HashMap<String, String>>() {
             };
-            Set<String> readObj = MAPPER.readValue(f, typeRef);
+            Map<String, String> readObj = MAPPER.readValue(f, typeRef);
 
             USER_LIST.clear();
-            USER_LIST.addAll(readObj);
-            LOG.info("File '{}' was read successfully.", Constants.FILENAME_USER_LIST);
+            USER_LIST.putAll(readObj);
+            LOG.info("File '{}' was read successfully, {} users added.", Constants.FILENAME_USER_LIST, USER_LIST.size());
         } catch (IOException ex) {
             LOG.warn("Failed to read user list from {}", Constants.FILENAME_USER_LIST, ex);
         }
     }
+
+    /**
+     * List all the users that have been welcomed by the bot
+     *
+     * @param session
+     * @param msgChannel
+     */
+    public static void listUsers(SlackSession session, SlackChannel msgChannel) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> entry : USER_LIST.entrySet()) {
+            sb.append(entry.getKey()).append(" on ").append(entry.getValue()).append("\n");
+        }
+
+        SlackAttachment sa;
+
+        if (sb.length() > 0) {
+            sa = new SlackAttachment();
+            sa.setFallback("Users welcomed by the bot");
+            sa.setText(sb.toString());
+            sa.setPretext("Users welcomed by the bot");
+            sa.setColor("good");
+
+            session.sendMessage(msgChannel, "", sa);
+        } else {
+            session.sendMessage(msgChannel, "No users have been welcomed by the bot!");
+        }
+
+        sb = new StringBuilder();
+        for (SlackUser user : session.getUsers()) {
+            if (isOnList(user) || user.isBot()) {
+                continue;
+            }
+            sb.append(user.getUserName()).append("\n");
+        }
+
+        if (sb.length() > 0) {
+            sa = new SlackAttachment();
+            sa.setFallback("Users not welcomed by the bot");
+            sa.setText(sb.toString());
+            sa.setPretext("Users not welcomed by the bot");
+            sa.setColor("bad");
+
+            session.sendMessage(msgChannel, "", sa);
+        } else {
+            session.sendMessage(msgChannel, "All users have been welcomed :thumbsup:");
+        }
+
+    }
+
 }

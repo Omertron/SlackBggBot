@@ -36,6 +36,7 @@ import static com.omertron.slackbot.Constants.DELIM_LEFT;
 import static com.omertron.slackbot.Constants.DELIM_RIGHT;
 import com.omertron.slackbot.enumeration.StatCategory;
 import com.omertron.slackbot.stats.BotStatistics;
+import com.omertron.slackbot.stats.BotWelcome;
 import com.ullink.slack.simpleslackapi.*;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
 import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
@@ -89,10 +90,12 @@ public class BoardGameListener implements SlackMessagePostedListener {
         PAT_COMMAND = Pattern.compile(regex);
 
         commands.clear();
-        commands.add("quit");
-        HelpListener.addHelpMessage(85, "quit", "", "Shutdown the bot.\nNote the bot will need to be manually restarted", true);
+        commands.add("welcome");
+        HelpListener.addHelpMessage(90, "welcome", "user", "Send welcome message to *<user>*", true);
         commands.add("restart");
-        HelpListener.addHelpMessage(80, "restart", "", "Shutdown and restart the bot.\nThis is used to upgrade the bot to the latest version", true);
+        HelpListener.addHelpMessage(95, "restart", "", "Shutdown and restart the bot.\nThis is used to upgrade the bot to the latest version", true);
+        commands.add("quit");
+        HelpListener.addHelpMessage(99, "quit", "", "Shutdown the bot.\nNote the bot will need to be manually restarted", true);
 
         // (?:<.+?>\W+|\[\[){1}?(quit|restart)(.*?)(?:\]\])?$
         regex = new StringBuilder("(?:<.+?>\\W+|")
@@ -199,6 +202,21 @@ public class BoardGameListener implements SlackMessagePostedListener {
                     session.sendMessage(msgChannel, "Bot will now attempt to restart :relieved:");
                     BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
                     System.exit(1);
+                    break;
+                case "WELCOME":
+                    String user = StringUtils.trimToEmpty(params);
+                    if("WHO".equalsIgnoreCase(user)) {
+                        BotWelcome.listUsers(session, msgChannel);
+                        break;
+                    }
+                    
+                    SlackUser slackUser = session.findUserByUserName(user);
+                    if (slackUser == null) {
+                        session.sendMessage(msgChannel, String.format("No user with username '%1$s' found", user));
+                    } else {
+                        session.sendMessage(msgChannel, "Sending welcome message to " + slackUser.getUserName());
+                        BotWelcome.sendWelcomeMessage(session, msgChannel, slackUser);
+                    }
                     break;
                 default:
                     LOG.info("Unknown command '{}' received from {}", command, msgSender.getUserName());
