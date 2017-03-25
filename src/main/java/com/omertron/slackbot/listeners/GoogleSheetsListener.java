@@ -25,7 +25,7 @@ import com.omertron.slackbot.model.HelpInfo;
 import com.omertron.slackbot.model.sheets.GameLogRow;
 import com.omertron.slackbot.model.sheets.PlayerInfo;
 import com.omertron.slackbot.model.sheets.SheetInfo;
-import com.omertron.slackbot.sheets.GoogleSheets;
+import com.omertron.slackbot.functions.GoogleSheets;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackSession;

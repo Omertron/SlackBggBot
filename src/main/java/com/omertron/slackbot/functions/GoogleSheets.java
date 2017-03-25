@@ -17,7 +17,7 @@
  *      along with the BGG Slack Bot.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package com.omertron.slackbot.sheets;
+package com.omertron.slackbot.functions;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
