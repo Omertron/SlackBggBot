@@ -21,10 +21,10 @@ package com.omertron.slackbot.listeners;
 
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.omertron.slackbot.Constants;
-import com.omertron.slackbot.model.GameLogRow;
 import com.omertron.slackbot.model.HelpInfo;
-import com.omertron.slackbot.model.PlayerInfo;
-import com.omertron.slackbot.model.SheetInfo;
+import com.omertron.slackbot.model.sheets.GameLogRow;
+import com.omertron.slackbot.model.sheets.PlayerInfo;
+import com.omertron.slackbot.model.sheets.SheetInfo;
 import com.omertron.slackbot.sheets.GoogleSheets;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;

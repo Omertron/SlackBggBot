@@ -17,7 +17,7 @@
  *      along with the BGG Slack Bot.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package com.omertron.slackbot.model;
+package com.omertron.slackbot.model.sheets;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;

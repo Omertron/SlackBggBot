@@ -17,7 +17,7 @@
  *      along with the BGG Slack Bot.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package com.omertron.slackbot.model;
+package com.omertron.slackbot.model.sheets;
 
 import com.google.api.services.sheets.v4.model.ValueRange;
 import java.text.ParseException;
