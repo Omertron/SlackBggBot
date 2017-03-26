@@ -47,7 +47,7 @@ public class GoogleSheets {
     /**
      * Global instance of the HTTP transport.
      */
-    private static HttpTransport HTTP_TRANSPORT;
+    private static HttpTransport httpTransport;
     /**
      * Google credentials
      */
@@ -70,7 +70,7 @@ public class GoogleSheets {
         if (credential == null) {
             LOG.info("Attempting to authorise");
             try {
-                HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                httpTransport = GoogleNetHttpTransport.newTrustedTransport();
                 credential = GoogleCredential.fromStream(new FileInputStream("SlackBggBot-7a8afe5ba1eb.json"))
                         .createScoped(Arrays.asList(SheetsScopes.SPREADSHEETS));
             } catch (IOException | GeneralSecurityException ex) {
@@ -81,7 +81,7 @@ public class GoogleSheets {
 
         if (sheets == null) {
             LOG.info("Attempting to get sheet service");
-            sheets = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+            sheets = new Sheets.Builder(httpTransport, JSON_FACTORY, credential)
                     .setApplicationName(Constants.BOT_NAME)
                     .build();
         }
