@@ -48,7 +48,6 @@ public final class Constants {
 
     // Meetup stuff
     public static final String MEETUP_URL = "meetupUrl";
-    public static final String MEETUP_CACHE_HOURS = "meetupCacheHours";
 
     private Constants() {
         throw new UnsupportedOperationException("Class cannot be instantiated");
