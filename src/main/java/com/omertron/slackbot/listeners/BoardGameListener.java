@@ -37,10 +37,12 @@ import static com.omertron.slackbot.Constants.DELIM_RIGHT;
 import com.omertron.slackbot.enumeration.StatCategory;
 import com.omertron.slackbot.functions.BotStatistics;
 import com.omertron.slackbot.functions.BotWelcome;
+import com.omertron.slackbot.functions.Meetup;
 import com.ullink.slack.simpleslackapi.*;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
 import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -79,6 +81,8 @@ public class BoardGameListener implements SlackMessagePostedListener {
         HelpListener.addHelpMessage(40, "coll", USERNAME, "Get a list of the owned games for a BGG user.", false);
         HelpListener.addHelpMessage(41, "coll", new String[]{USERNAME, "ID list"},
                 "Get a list of the owned games for a BGG user that match the ID list.", false);
+        commands.add("meetup");
+        HelpListener.addHelpMessage(50, "meetup", new String[]{"Quantity", "DETAILED"}, "Get a list of the *<Quantity>* upcoming MeetUps.\nAdd the *<Detailed>* keyword to get more information.", false);
 
         String regex = new StringBuilder("(?i)")
                 .append("\\").append(DELIM_LEFT).append("\\").append(DELIM_LEFT)
@@ -172,6 +176,11 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 BotStatistics.increment(StatCategory.COLLECTION, msgSender.getUserName());
                 commandCollection(session, msgChannel, query);
                 break;
+            case "MEETUP":
+                botUpdateChannel(session, msgChannel, event);
+                BotStatistics.increment(StatCategory.MEETUP, msgSender.getUserName());
+                commandMeetup(session, msgChannel, query);
+                break;
             default:
                 LOG.info("Unknown command '" + command + "' found. Ignoring.");
         }
@@ -205,11 +214,11 @@ public class BoardGameListener implements SlackMessagePostedListener {
                     break;
                 case "WELCOME":
                     String user = StringUtils.trimToEmpty(params);
-                    if("WHO".equalsIgnoreCase(user)) {
+                    if ("WHO".equalsIgnoreCase(user)) {
                         BotWelcome.listUsers(session, msgChannel);
                         break;
                     }
-                    
+
                     SlackUser slackUser = session.findUserByUserName(user);
                     if (slackUser == null) {
                         session.sendMessage(msgChannel, String.format("No user with username '%1$s' found", user));
@@ -720,6 +729,53 @@ public class BoardGameListener implements SlackMessagePostedListener {
         } else {
             return "https:" + link;
         }
+    }
+
+    /**
+     * Process the MeetUp details and present them
+     *
+     * @param session
+     * @param msgChannel
+     * @param query
+     */
+    private void commandMeetup(SlackSession session, SlackChannel msgChannel, String query) {
+        int muQuantity = 1;
+        boolean muDetailed = false;
+
+        if (StringUtils.isNotBlank(query)) {
+            LOG.info("Processing parameters");
+            List<String> params = new ArrayList<>();
+            if (query.contains(" ")) {
+                params.addAll(Arrays.asList(query.split(" ")));
+            } else {
+                params.add(query);
+            }
+
+            LOG.info("Found {} parameters", params.size());
+
+            for (String p : params) {
+                if (StringUtils.isNumeric(p)) {
+                    muQuantity = NumberUtils.toInt(p, 1);
+                    continue;
+                }
+
+                if ("DETAILED".equalsIgnoreCase(p)) {
+                    muDetailed = true;
+                }
+            }
+        }
+
+        LOG.info("Quantity: {}", muQuantity);
+        LOG.info("Detailed: {}", muDetailed);
+
+        Meetup.readMeetUp(muQuantity);
+
+        List<SlackAttachment> attach = Meetup.getMeetupAttachment(muQuantity, muDetailed);
+        SlackPreparedMessage preparedMessage = new SlackPreparedMessage.Builder()
+                .addAttachments(attach)
+                .withMessage("These are the upcoming MeetUps:")
+                .build();
+        session.sendMessage(msgChannel, preparedMessage);
     }
 
 }

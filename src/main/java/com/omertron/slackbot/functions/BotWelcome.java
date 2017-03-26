@@ -30,13 +30,11 @@ import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,11 +84,7 @@ public final class BotWelcome {
      * @param username
      */
     public static synchronized void addUser(String username) {
-        TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-        df.setTimeZone(tz);
-
-        String dateString = df.format(new Date());
+        String dateString = DateFormatUtils.format(new Date(), "dd-MM-yyyy HH:mm:ss");
         LOG.info("Adding '{}' to the welcomed list on {}", username, dateString);
         USER_LIST.put(username, dateString);
         // Save the file

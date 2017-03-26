@@ -30,5 +30,6 @@ public enum StatCategory implements Serializable {
     ABOUT,
     STATS,
     ADMIN,
-    HELP;
+    HELP,
+    MEETUP;
 }

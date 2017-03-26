@@ -31,37 +31,35 @@ import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory;
 import java.net.Proxy;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SlackBot {
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(SlackBot.class);
     private static final Properties PROPS = new Properties();
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
     private static final List<SlackUser> BOT_ADMINS = new ArrayList<>();
-    
+
     private SlackBot() {
         // No need for a constructor in the main class
     }
-    
+
     public static void main(String[] args) throws Exception {
         LOG.info("Starting {} v{} ...", Constants.BOT_NAME, Constants.BOT_VERSION);
 
         // Load the properties
         PropertyUtils.initProperties(PROPS, DEFAULT_PROPERTIES_FILE);
-        
+
         LOG.info("Starting session...");
         SlackSession session;
-        
+
         String proxyURL = PROPS.getProperty(Constants.PROXY_HOST);
         if (StringUtils.isNotBlank(proxyURL)) {
             int proxyPort = Integer.parseInt(PROPS.getProperty(Constants.PROXY_PORT, "80"));
@@ -69,7 +67,7 @@ public class SlackBot {
         } else {
             session = SlackSessionFactory.createWebSocketSlackSession(PROPS.getProperty(Constants.BOT_TOKEN));
         }
-        
+
         session.connect();
         // Populate the BOT admins
         populateBotAdmins(session);
@@ -81,7 +79,7 @@ public class SlackBot {
         session.addMessagePostedListener(new GoogleSheetsListener());
         // Add help listener
         session.addMessagePostedListener(new HelpListener());
-        
+
         LOG.info("Session connected: {}", session.isConnected());
         LOG.info("\tConnected to {} ({})", session.getTeam().getName(), session.getTeam().getId());
         LOG.info("\tFound {} channels and {} users", session.getChannels().size(), session.getUsers().size());
@@ -96,14 +94,14 @@ public class SlackBot {
             default:
                 LOG.info("\tThere are {} BOT admins: {}", BOT_ADMINS.size(), StringUtils.join(BOT_ADMINS, ","));
         }
-        
+
         LOG.info("Checking for users welcomed list");
         BotWelcome.readFile();
-        
+
         LOG.info("Checking for stats file");
         BotStatistics.readFile();
         LOG.info("Stats read:\n{}", BotStatistics.generateStatistics(false, true));
-        
+
         Thread.sleep(Long.MAX_VALUE);
     }
 
@@ -113,14 +111,18 @@ public class SlackBot {
      * @param session
      */
     private static void notifyStartup(SlackSession session) {
-        TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-        df.setTimeZone(tz);
-        
-        String message = String.format("%1$s started at %2$s", Constants.BOT_NAME, df.format(new Date()));
+        String message = String.format("%1$s started at %2$s",
+                Constants.BOT_NAME,
+                DateFormatUtils.format(new Date(), "dd-MM-yyyy HH:mm:ss"));
         messageAdmins(session, message);
     }
-    
+
+    /**
+     * Send a message to all admins
+     *
+     * @param session
+     * @param message
+     */
     public static void messageAdmins(SlackSession session, String message) {
         LOG.info("Sending message to admins: '{}'", message);
         for (SlackUser user : BOT_ADMINS) {
@@ -136,7 +138,7 @@ public class SlackBot {
      */
     private static void populateBotAdmins(SlackSession session) {
         String users = PROPS.getProperty(Constants.BOT_ADMINS, "");
-        
+
         if (StringUtils.isNotBlank(users)) {
             SlackUser sUser;
             for (String user : StringUtils.split(users, ",")) {
@@ -201,7 +203,7 @@ public class SlackBot {
      */
     private static String formatLink(String marker, String id, String text) {
         StringBuilder formatted = new StringBuilder();
-        
+
         formatted.append("<").append(marker)
                 .append(id)
                 .append("|")
@@ -220,5 +222,5 @@ public class SlackBot {
     public static String getProperty(String key, String defaultValue) {
         return PROPS.getProperty(key, defaultValue);
     }
-    
+
 }
