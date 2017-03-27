@@ -162,6 +162,15 @@ public final class BotStatistics {
             STATISTICS.clear();
             STATISTICS.putAll(readObj);
             LOG.info("File '{}' was read successfully.", Constants.FILENAME_STAT);
+
+            // Add any new categories that have been created
+            for (StatCategory stat : StatCategory.values()) {
+                if (!STATISTICS.containsKey(stat)) {
+                    LOG.info("Added new statistic category: {}", stat.toString());
+                    STATISTICS.put(stat, new StatHolder(stat));
+                }
+            }
+
         } catch (IOException ex) {
             LOG.warn("Failed to read stats from {}", Constants.FILENAME_STAT, ex);
         }
