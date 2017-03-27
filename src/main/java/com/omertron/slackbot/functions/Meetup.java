@@ -30,10 +30,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yamj.api.common.exception.ApiException;
+import org.yamj.api.common.exception.ApiExceptionType;
 
 public class Meetup {
 
@@ -51,8 +53,12 @@ public class Meetup {
         // Static class
     }
 
-    public static void readMeetUp(int pageSize) {
+    public static void readMeetUp(int pageSize) throws ApiException {
         MEETUPS.clear();
+
+        if (StringUtils.isBlank(BASE_URL)) {
+            throw new ApiException(ApiExceptionType.INVALID_URL, "Meetup URL is not set in the properties file! Use the property " + Constants.MEETUP_URL);
+        }
 
         try {
             URL u = HttpTools.createUrl(BASE_URL + pageSize);

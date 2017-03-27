@@ -51,6 +51,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yamj.api.common.exception.ApiException;
 
 /**
  *
@@ -236,7 +237,8 @@ public class BoardGameListener implements SlackMessagePostedListener {
     }
 
     /**
-     * Add a reaction to the message that called us and send the "typing..." indicator
+     * Add a reaction to the message that called us and send the "typing..."
+     * indicator
      *
      * @param session
      * @param msgChannel
@@ -768,7 +770,13 @@ public class BoardGameListener implements SlackMessagePostedListener {
         LOG.info("Quantity: {}", muQuantity);
         LOG.info("Detailed: {}", muDetailed);
 
-        Meetup.readMeetUp(muQuantity);
+        try {
+            Meetup.readMeetUp(muQuantity);
+        } catch (ApiException ex) {
+            LOG.warn("Failed to read data from meetup: {}", ex.getMessage());
+            com.omertron.slackbot.SlackBot.messageAdmins(session, "Failed to read data from meetup: " + ex.getMessage());
+            return;
+        }
 
         List<SlackAttachment> attach = Meetup.getMeetupAttachment(muQuantity, muDetailed);
         SlackPreparedMessage preparedMessage = new SlackPreparedMessage.Builder()
