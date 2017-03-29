@@ -53,6 +53,12 @@ public class Meetup {
         // Static class
     }
 
+    /**
+     * Retrieve and process the MeetUps from the site.
+     *
+     * @param pageSize
+     * @throws ApiException
+     */
     public static void readMeetUp(int pageSize) throws ApiException {
         MEETUPS.clear();
 
@@ -61,8 +67,8 @@ public class Meetup {
         }
 
         try {
-            URL u = HttpTools.createUrl(BASE_URL + pageSize);
-            List<MeetupDetails> meetups = MAPPER.readValue(u, new TypeReference<List<MeetupDetails>>() {
+            URL url = HttpTools.createUrl(BASE_URL + pageSize);
+            List<MeetupDetails> meetups = MAPPER.readValue(url, new TypeReference<List<MeetupDetails>>() {
             });
             MEETUPS.addAll(meetups);
         } catch (IOException ex) {
@@ -76,6 +82,13 @@ public class Meetup {
         LOG.info("Processed {} MeetUp events", MEETUPS.size());
     }
 
+    /**
+     * Format the MeetUp list into a list of Slack Attachments
+     *
+     * @param quantity
+     * @param detailed
+     * @return
+     */
     public static List<SlackAttachment> getMeetupAttachment(int quantity, boolean detailed) {
         List<SlackAttachment> attachments = new ArrayList<>();
         LOG.info("Processing {} of the {} meetups read.", Math.max(1, quantity), MEETUPS.size());
@@ -95,7 +108,7 @@ public class Meetup {
             }
 
             if (m.getVenue() != null) {
-                sa.addField("Venue", m.getVenue().getName(), false);
+                sa.addField("Venue", m.getVenue().getName(), true);
             }
 
             sa.addField("Date", DateFormatUtils.format(m.getTime(), "EEEE d MMMM h:mma"), true);
@@ -118,10 +131,6 @@ public class Meetup {
      * @return
      */
     private static String reformatDescription(final String desc) {
-        // Replace <p>xxx</p> with \n
-        // Replace <b> with *
-        // Replace <a href
-
         return desc.replaceAll("<p>(.*?)</p>", "$1\n")
                 .replaceAll("</?b>", "*")
                 .replaceAll("<a.*?>(.*?)</a>", "$1");
