@@ -243,7 +243,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
             sa.setFallback(sheetInfo.getGameName() + " for " + sheetInfo.getFormattedDate("EEE dd MMM"));
             sa.setAuthorName("Chosen by " + sheetInfo.getGameChooser());
         } else {
-            sa.setAuthorName(sheetInfo.getGameChooser() + " chose a game already!");
+            sa.setAuthorName(sheetInfo.getGameChooser() + " choose a game already!");
             sa.setFallback("No game chosen for " + sheetInfo.getFormattedDate("EEE dd MMM"));
             sa.setTitle(sheetInfo.getGameChooser() + " has not chosen a game yet");
         }
