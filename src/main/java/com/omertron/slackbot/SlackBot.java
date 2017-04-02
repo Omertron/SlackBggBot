@@ -106,6 +106,15 @@ public class SlackBot {
     }
 
     /**
+     * Shut down the bot with the given exit code.
+     *
+     * @param exitCode
+     */
+    public static void shutdown(int exitCode) {
+        System.exit(exitCode);
+    }
+
+    /**
      * Send a start up message to all BOT admins to inform them of the bot's restart
      *
      * @param session

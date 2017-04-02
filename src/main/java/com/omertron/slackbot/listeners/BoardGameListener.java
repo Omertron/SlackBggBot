@@ -206,12 +206,12 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 case "QUIT":
                     session.sendMessage(msgChannel, "Bot will now quit :disappointed:");
                     BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
-                    System.exit(0);
+                    com.omertron.slackbot.SlackBot.shutdown(0);
                     break;
                 case "RESTART":
                     session.sendMessage(msgChannel, "Bot will now attempt to restart :relieved:");
                     BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
-                    System.exit(1);
+                    com.omertron.slackbot.SlackBot.shutdown(1);
                     break;
                 case "WELCOME":
                     String user = StringUtils.trimToEmpty(params);
@@ -778,7 +778,9 @@ public class BoardGameListener implements SlackMessagePostedListener {
             return;
         }
 
-        List<SlackAttachment> attach = Meetup.getMeetupAttachment(muQuantity, muDetailed);
+        Meetup.getMeetupsDays(7, false);
+        
+        List<SlackAttachment> attach = Meetup.getMeetupsQty(muQuantity, muDetailed);
         SlackPreparedMessage preparedMessage = new SlackPreparedMessage.Builder()
                 .addAttachments(attach)
                 .withMessage("These are the upcoming MeetUps:")
