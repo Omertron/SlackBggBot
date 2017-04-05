@@ -64,6 +64,7 @@ $RECYCLE.BIN/
 /target/
 /application.properties
 /nbactions.xml
+/nb-configuration.xml
 /*.log
 /src/main/resources/git.properties
 /*.json
