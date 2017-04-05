@@ -21,6 +21,9 @@ package com.omertron.slackbot.model.meetup;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.omertron.slackbot.model.AbstractJsonMapping;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -39,7 +42,7 @@ public class MeetupDetails extends AbstractJsonMapping {
     @JsonProperty("status")
     private String status;
     @JsonProperty("time")
-    private Date time;
+    private LocalDateTime time;
     @JsonProperty("updated")
     private Date updated;
     @JsonProperty("utc_offset")
@@ -111,12 +114,12 @@ public class MeetupDetails extends AbstractJsonMapping {
         this.status = status;
     }
 
-    public Date getTime() {
+    public LocalDateTime getTime() {
         return time;
     }
 
     public void setTime(long time) {
-        this.time = new Date(time);
+        this.time = LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.systemDefault());
     }
 
     public Date getUpdated() {

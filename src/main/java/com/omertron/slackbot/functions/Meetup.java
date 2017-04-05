@@ -28,10 +28,15 @@ import com.omertron.slackbot.utils.HttpTools;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import java.io.IOException;
 import java.net.URL;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yamj.api.common.exception.ApiException;
@@ -43,6 +48,7 @@ public class Meetup {
     private static final ObjectMapper MAPPER;
     private static final List<MeetupDetails> MEETUPS = new ArrayList<>();
     private static final String BASE_URL;
+    private static final DateTimeFormatter DT_FORMAT = DateTimeFormatter.ofPattern("EEEE d MMMM h:mma");
 
     static {
         MAPPER = new ObjectMapper();
@@ -89,39 +95,74 @@ public class Meetup {
      * @param detailed
      * @return
      */
-    public static List<SlackAttachment> getMeetupAttachment(int quantity, boolean detailed) {
+    public static List<SlackAttachment> getMeetupsQty(int quantity, boolean detailed) {
         List<SlackAttachment> attachments = new ArrayList<>();
         LOG.info("Processing {} of the {} meetups read.", Math.max(1, quantity), MEETUPS.size());
         for (int loop = 0; loop < Math.max(1, quantity); loop++) {
             MeetupDetails m = MEETUPS.get(loop);
             LOG.info("\t{}: {}", loop + 1, m.getName());
-            SlackAttachment sa = new SlackAttachment();
-            sa.addMarkdownIn("text");
-            sa.setColor("good");
-            sa.setTitle(m.getName());
-            sa.setTitleLink(m.getLink());
-
-            if (detailed) {
-                sa.setText(reformatDescription(m.getDescription()));
-                sa.addField("Duration", String.format("%1$d hour(s)", m.getDuration()), true);
-                sa.addField("Status", m.getStatus(), true);
-            }
-
-            if (m.getVenue() != null) {
-                sa.addField("Venue", m.getVenue().getName(), true);
-            }
-
-            sa.addField("Date", DateFormatUtils.format(m.getTime(), "EEEE d MMMM h:mma"), true);
-
-            if (m.getHowToFindUs() != null && detailed) {
-                sa.addField("How to find us", m.getHowToFindUs(), false);
-            }
-
-            attachments.add(sa);
+            attachments.add(makeSlackAttachment(m, detailed));
         }
 
         LOG.info("Finished processing {} meetups", Math.max(1, quantity));
         return attachments;
+    }
+
+    /**
+     * Format the MeetUp list into a list of Slack Attachments, up to a certain number of days ahead
+     *
+     * @param daysAhead
+     * @param detailed
+     * @return
+     */
+    public static Map<LocalDateTime, SlackAttachment> getMeetupsDays(int daysAhead, boolean detailed) {
+        LocalDate now = LocalDate.now();
+        Map<LocalDateTime, SlackAttachment> results = new HashMap<>();
+
+        Period diff;
+        for (MeetupDetails md : MEETUPS) {
+            diff = Period.between(now, md.getTime().toLocalDate());
+            if (diff.getDays() <= daysAhead) {
+                LOG.info("Add: Days: {} - {} - {}", diff.getDays(), md.getTime().format(DT_FORMAT), md.getName());
+                results.put(md.getTime(), makeSlackAttachment(md, detailed));
+            } else {
+                LOG.info("Skip: Days: {} - {} - {}", diff.getDays(), md.getTime().format(DT_FORMAT), md.getName());
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Convert MeetupDetails into a SlackAttachment
+     *
+     * @param meetupDetails
+     * @param detailed
+     * @return
+     */
+    private static SlackAttachment makeSlackAttachment(MeetupDetails meetupDetails, boolean detailed) {
+        SlackAttachment sa = new SlackAttachment();
+        sa.addMarkdownIn("text");
+        sa.setColor("good");
+        sa.setTitle(meetupDetails.getName());
+        sa.setTitleLink(meetupDetails.getLink());
+
+        if (detailed) {
+            sa.setText(reformatDescription(meetupDetails.getDescription()));
+            sa.addField("Duration", String.format("%1$d hour(s)", meetupDetails.getDuration()), true);
+            sa.addField("Status", meetupDetails.getStatus(), true);
+        }
+
+        if (meetupDetails.getVenue() != null) {
+            sa.addField("Venue", meetupDetails.getVenue().getName(), true);
+        }
+
+        sa.addField("Date", meetupDetails.getTime().format(DT_FORMAT), true);
+
+        if (meetupDetails.getHowToFindUs() != null && detailed) {
+            sa.addField("How to find us", meetupDetails.getHowToFindUs(), false);
+        }
+        return sa;
     }
 
     /**
