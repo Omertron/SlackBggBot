@@ -38,7 +38,7 @@ import org.yamj.api.common.exception.ApiException;
 public class MeetupBotTask extends AbstractBotTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(MeetupBotTask.class);
-    private static final int LOOK_AHEAD_DAYS = 7;
+    private static final int LOOK_AHEAD_DAYS = 2;
 
     public MeetupBotTask(ScheduledExecutorService executorService, String name, int targetHour, int targetMin, SlackSession session, SlackChannel channel) {
         super(executorService, name, targetHour, targetMin, session, channel);
@@ -64,7 +64,7 @@ public class MeetupBotTask extends AbstractBotTask {
         spmTomorrowBuilder.withMessage("Meetups happening tomorrow");
 
         if (meetupList.isEmpty()) {
-            getSession().sendMessage(getChannel(), "No meetups scheduled for the next " + LOOK_AHEAD_DAYS + " days");
+            LOG.info("No meetups scheduled for the next {} days", LOOK_AHEAD_DAYS);
         } else {
             LocalDate now = LocalDate.now();
             Period diff;
