@@ -146,6 +146,7 @@ public class Meetup {
         sa.setColor("good");
         sa.setTitle(meetupDetails.getName());
         sa.setTitleLink(meetupDetails.getLink());
+        sa.setThumbUrl("https://secure.meetupstatic.com/photos/event/4/9/1/c/global_453258716.jpeg");
 
         if (detailed) {
             sa.setText(reformatDescription(meetupDetails.getDescription()));

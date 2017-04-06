@@ -19,11 +19,12 @@
  */
 package com.omertron.slackbot;
 
+import com.omertron.slackbot.functions.BotStatistics;
+import com.omertron.slackbot.functions.BotWelcome;
+import com.omertron.slackbot.functions.scheduler.BotTaskExecutor;
 import com.omertron.slackbot.listeners.BoardGameListener;
 import com.omertron.slackbot.listeners.GoogleSheetsListener;
 import com.omertron.slackbot.listeners.HelpListener;
-import com.omertron.slackbot.functions.BotStatistics;
-import com.omertron.slackbot.functions.BotWelcome;
 import com.omertron.slackbot.utils.PropertyUtils;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackPersona;
@@ -46,6 +47,7 @@ public class SlackBot {
     private static final Properties PROPS = new Properties();
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
     private static final List<SlackUser> BOT_ADMINS = new ArrayList<>();
+    private static BotTaskExecutor executor;
 
     private SlackBot() {
         // No need for a constructor in the main class
@@ -83,17 +85,11 @@ public class SlackBot {
         LOG.info("Session connected: {}", session.isConnected());
         LOG.info("\tConnected to {} ({})", session.getTeam().getName(), session.getTeam().getId());
         LOG.info("\tFound {} channels and {} users", session.getChannels().size(), session.getUsers().size());
-        switch (BOT_ADMINS.size()) {
-            case 0:
-                LOG.warn("\tThere are no BOT Admins found! Please add at least 1 in the properties file!");
-                LOG.warn("\tUser the property '{}' to add them", Constants.BOT_ADMINS);
-                break;
-            case 1:
-                LOG.info("\tThere is 1 BOT admin: {}", StringUtils.join(BOT_ADMINS, ","));
-                break;
-            default:
-                LOG.info("\tThere are {} BOT admins: {}", BOT_ADMINS.size(), StringUtils.join(BOT_ADMINS, ","));
-        }
+
+        outputBotAdminsMessage();
+
+        LOG.info("Starting the Task Executor");
+        executor = new BotTaskExecutor(session);
 
         LOG.info("Checking for users welcomed list");
         BotWelcome.readFile();
@@ -106,16 +102,39 @@ public class SlackBot {
     }
 
     /**
+     * Output log messages about the bot admins
+     */
+    private static void outputBotAdminsMessage() {
+        switch (BOT_ADMINS.size()) {
+            case 0:
+                LOG.warn("\tThere are no BOT Admins found! Please add at least 1 in the properties file!");
+                LOG.warn("\tUser the property '{}' to add them", Constants.BOT_ADMINS);
+                break;
+            case 1:
+                LOG.info("\tThere is 1 BOT admin: {}", StringUtils.join(BOT_ADMINS, ","));
+                break;
+            default:
+                List<String> names = new ArrayList<>();
+                BOT_ADMINS.forEach((su) -> {
+                    names.add(su.getUserName());
+                });
+                LOG.info("\tThere are {} BOT admins: {}", BOT_ADMINS.size(), StringUtils.join(names, ","));
+        }
+    }
+
+    /**
      * Shut down the bot with the given exit code.
      *
      * @param exitCode
      */
     public static void shutdown(int exitCode) {
+        executor.stopAll();
         System.exit(exitCode);
     }
 
     /**
-     * Send a start up message to all BOT admins to inform them of the bot's restart
+     * Send a start up message to all BOT admins to inform them of the bot's
+     * restart
      *
      * @param session
      */
