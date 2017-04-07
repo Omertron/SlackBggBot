@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * Holds the help information about a bot command
@@ -34,13 +36,6 @@ public class HelpInfo {
     private List<String> params = new LinkedList<>();
     private String message;
     private boolean admin;
-
-    /**
-     * Create an empty HelpInfo object
-     */
-    public HelpInfo() {
-        // Default constructor
-    }
 
     /**
      * Create a HelpInfo object with a single parameter
@@ -134,4 +129,10 @@ public class HelpInfo {
             return format.toString();
         }
     }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+    }
+
 }

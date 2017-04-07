@@ -19,6 +19,8 @@
  */
 package com.omertron.slackbot.functions.scheduler;
 
+import com.ullink.slack.simpleslackapi.SlackAttachment;
+
 public interface BotTaskInterface {
 
     /**
@@ -43,4 +45,10 @@ public interface BotTaskInterface {
      */
     public String getName();
 
+    /**
+     * Get the status of the task
+     *
+     * @return
+     */
+    public SlackAttachment getStatus();
 }

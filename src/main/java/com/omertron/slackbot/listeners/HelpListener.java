@@ -27,9 +27,11 @@ import com.omertron.slackbot.enumeration.StatCategory;
 import com.omertron.slackbot.model.HelpInfo;
 import com.omertron.slackbot.functions.BotStatistics;
 import com.omertron.slackbot.functions.BotWelcome;
+import com.omertron.slackbot.functions.scheduler.BotTaskExecutor;
 import com.omertron.slackbot.utils.GitRepositoryState;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
+import com.ullink.slack.simpleslackapi.SlackPreparedMessage;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
@@ -62,9 +64,11 @@ public class HelpListener implements SlackMessagePostedListener {
         List<String> commands = new ArrayList<>();
         commands.add("help");
         commands.add("about");
-        addHelpMessage(99, "about", "", "Get information about the bot", false);
+        addHelpMessage(90, "about", "Get information about the bot", false);
         commands.add("stats");
-        addHelpMessage(95, "stats", "", "Get some stats about the bot", false);
+        addHelpMessage(91, "stats", "Get some stats about the bot", false);
+        commands.add("tasks");
+        addHelpMessage(92, "tasks", "Display stats about the tasks", true);
 
         String regex = new StringBuilder("(?i)")
                 .append("\\").append(DELIM_LEFT).append("\\").append(DELIM_LEFT)
@@ -116,6 +120,10 @@ public class HelpListener implements SlackMessagePostedListener {
                     String stats = BotStatistics.generateStatistics(true, SlackBot.isBotAdmin(msgSender));
                     session.sendMessage(msgChannel, stats);
                     break;
+                case "TASKS":
+                    SlackPreparedMessage message = BotTaskExecutor.status();
+                    session.sendMessage(msgChannel, message);
+                    break;
                 default:
                     LOG.warn("Unknown command recieved: '{}'", command);
             }
@@ -161,7 +169,13 @@ public class HelpListener implements SlackMessagePostedListener {
      */
     public static void addHelpMessage(Integer priority, String command, String param, String message, boolean adminOnly) {
         helpMessage = null;
+
+        if (INFO.containsKey(priority)) {
+            LOG.warn("Help message with priority '{}' already exists: '{}'", priority, INFO.get(priority).getCommand());
+        }
+
         INFO.put(priority, new HelpInfo(command, param, message, adminOnly));
+        LOG.info("Added: {} - {}", priority, INFO.get(priority).toString());
     }
 
     /**
@@ -175,7 +189,13 @@ public class HelpListener implements SlackMessagePostedListener {
      */
     static void addHelpMessage(Integer priority, String command, String[] params, String message, boolean adminOnly) {
         helpMessage = null;
+
+        if (INFO.containsKey(priority)) {
+            LOG.warn("Help message with priority '{}' already exists: '{}'", priority, INFO.get(priority).getCommand());
+        }
+
         INFO.put(priority, new HelpInfo(command, params, message, adminOnly));
+        LOG.info("Added: {} - {}", priority, INFO.get(priority).toString());
     }
 
     /**
@@ -197,7 +217,7 @@ public class HelpListener implements SlackMessagePostedListener {
 
             helpMessage.setPretext(text.toString());
             helpMessage.addMarkdownIn("fields");
-            helpMessage.setColor("good");
+            helpMessage.setColor(Constants.ATTACH_COLOUR_GOOD);
 
             for (Map.Entry<Integer, HelpInfo> entry : INFO.entrySet()) {
                 HelpInfo hi = entry.getValue();

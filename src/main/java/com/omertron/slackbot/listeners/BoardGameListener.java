@@ -74,16 +74,16 @@ public class BoardGameListener implements SlackMessagePostedListener {
         commands.add("search");
         HelpListener.addHelpMessage(10, "search", "game name", "Search for games called *<game name>*.\nThis does not need to be the exact name of the game.", false);
         commands.add("game");
-        HelpListener.addHelpMessage(22, "game", "game title", "Get information about *<game title>*.\nThis must be the exact name of the game as per BGG.", false);
-        HelpListener.addHelpMessage(20, "game", BGG_ID, "Get information about the game with this *<BGG ID>*.", false);
-        commands.add("user");
-        HelpListener.addHelpMessage(50, "user", USERNAME, "Get information on a BGG user.", false);
+        HelpListener.addHelpMessage(11, "game", BGG_ID, "Get information about the game with this *<BGG ID>*.", false);
+        HelpListener.addHelpMessage(12, "game", "game title", "Get information about *<game title>*.\nThis must be the exact name of the game as per BGG.", false);
         commands.add("coll");
-        HelpListener.addHelpMessage(40, "coll", USERNAME, "Get a list of the owned games for a BGG user.", false);
-        HelpListener.addHelpMessage(41, "coll", new String[]{USERNAME, "ID list"},
+        HelpListener.addHelpMessage(15, "coll", USERNAME, "Get a list of the owned games for a BGG user.", false);
+        HelpListener.addHelpMessage(16, "coll", new String[]{USERNAME, "ID list"},
                 "Get a list of the owned games for a BGG user that match the ID list.", false);
+        commands.add("user");
+        HelpListener.addHelpMessage(20, "user", USERNAME, "Get information on a BGG user.", false);
         commands.add("meetup");
-        HelpListener.addHelpMessage(50, "meetup", new String[]{"Quantity", "DETAILED"}, "Get a list of the *<Quantity>* upcoming MeetUps.\nAdd the *<Detailed>* keyword to get more information.", false);
+        HelpListener.addHelpMessage(30, "meetup", new String[]{"Quantity", "DETAILED"}, "Get a list of the *<Quantity>* upcoming MeetUps.\nAdd the *<Detailed>* keyword to get more information.", false);
 
         String regex = new StringBuilder("(?i)")
                 .append("\\").append(DELIM_LEFT).append("\\").append(DELIM_LEFT)
@@ -96,9 +96,9 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         commands.clear();
         commands.add("welcome");
-        HelpListener.addHelpMessage(90, "welcome", "user", "Send welcome message to *<user>*", true);
+        HelpListener.addHelpMessage(97, "welcome", "user", "Send welcome message to *<user>*", true);
         commands.add("restart");
-        HelpListener.addHelpMessage(95, "restart", "", "Shutdown and restart the bot.\nThis is used to upgrade the bot to the latest version", true);
+        HelpListener.addHelpMessage(98, "restart", "", "Shutdown and restart the bot.\nThis is used to upgrade the bot to the latest version", true);
         commands.add("quit");
         HelpListener.addHelpMessage(99, "quit", "", "Shutdown the bot.\nNote the bot will need to be manually restarted", true);
 
@@ -379,7 +379,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         sa.setTitle(StringUtils.joinWith(" ", result.getFirstName(), result.getLastName()));
         sa.setTitleLink(Constants.BGG_USER_LINK + result.getName());
         sa.setAuthorIcon(formatHttpLink(result.getAvatarLink()));
-        sa.setColor(Constants.ATTACH_COLOUR);
+        sa.setColor(Constants.ATTACH_COLOUR_GOOD);
         sa.addField("Year Registered", "" + result.getYearRegistered(), true);
         sa.addField("Location", StringUtils.joinWith(", ", result.getStateOrProvince(), result.getCountry()), true);
         sa.addField("Trade Rating", "" + result.getTradeRating(), true);
@@ -514,7 +514,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         sa.setFallback(String.format(collectionFormat, username, partCount, totalParts));
         sa.setTitle(String.format(collectionFormat, username, partCount, totalParts));
         sa.setTitleLink(Constants.BGG_COLL_LINK + username);
-        sa.setColor(Constants.ATTACH_COLOUR);
+        sa.setColor(Constants.ATTACH_COLOUR_GOOD);
 
         List<SlackAttachment> collList = new ArrayList<>();
 
@@ -532,7 +532,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 sa.setFallback(String.format(collectionFormat, username, partCount, totalParts));
                 sa.setAuthorName(String.format(collectionFormat, username, partCount, totalParts));
                 sa.setAuthorLink(Constants.BGG_COLL_LINK + username);
-                sa.setColor(Constants.ATTACH_COLOUR);
+                sa.setColor(Constants.ATTACH_COLOUR_GOOD);
             }
 
             sb.append(String.format("%1$s (%2$s) - <%3$s%4$d|%4$d>\n",
@@ -587,7 +587,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
             sa.setTitleLink(Constants.BGG_GAME_LINK + game.getObjectId());
             sa.setAuthorIcon(game.getThumbnail());
             sa.setText(StringEscapeUtils.unescapeHtml4(game.getComment()));
-            sa.setColor(Constants.ATTACH_COLOUR);
+            sa.setColor(Constants.ATTACH_COLOUR_GOOD);
             sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
             sa.addField(BGG_ID, String.valueOf(game.getObjectId()), true);
             if (game.getStats() != null && game.getStats().getRating() != null) {
@@ -666,7 +666,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         sa.setFallback(INFORMATION_ON + game.getPrimaryName());
         sa.setTitle(nameFormatted.toString());
         sa.setTitleLink(Constants.BGG_GAME_LINK + game.getId());
-        sa.setColor(Constants.ATTACH_COLOUR);
+        sa.setColor(Constants.ATTACH_COLOUR_GOOD);
 
         return sa;
     }
@@ -686,7 +686,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         sa.setAuthorLink(Constants.BGG_GAME_LINK + game.getId());
         sa.setAuthorIcon(game.getThumbnail());
         sa.setText(StringEscapeUtils.unescapeHtml4(game.getDescription()));
-        sa.setColor(Constants.ATTACH_COLOUR);
+        sa.setColor(Constants.ATTACH_COLOUR_GOOD);
         sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
         sa.addField(BGG_ID, String.valueOf(game.getId()), true);
         sa.addField("Player Count", game.getMinPlayers() + "-" + game.getMaxPlayers(), true);
