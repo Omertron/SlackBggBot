@@ -19,6 +19,8 @@
  */
 package com.omertron.slackbot.functions.scheduler;
 
+import com.omertron.slackbot.Constants;
+import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import java.time.Duration;
@@ -29,6 +31,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,6 +101,31 @@ public abstract class AbstractBotTask implements BotTaskInterface {
 
     public final AtomicInteger getCompletedTasks() {
         return completedTasks;
+    }
+
+    /**
+     * Return an attachment with the status of the BotTask
+     *
+     * @return
+     */
+    @Override
+    public final SlackAttachment getStatus() {
+        SlackAttachment sa = new SlackAttachment();
+
+        sa.setTitle(name);
+
+        StringBuilder time = new StringBuilder();
+        time.append(StringUtils.leftPad(Integer.toString(targetHour), 2, '0'))
+                .append(':')
+                .append(StringUtils.leftPad(Integer.toString(targetMin), 2, '0'));
+
+        sa.addField("Target Time", time.toString(), true);
+        sa.addField("Remaining Time", formatSeconds(scheduledTask.getDelay(TimeUnit.SECONDS)), true);
+        sa.addField("Channel", channel.getName(), true);
+        sa.addField("Executions", Integer.toString(completedTasks.get()), true);
+        sa.setColor(Constants.ATTACH_COLOUR_GOOD);
+
+        return sa;
     }
 
     @Override
@@ -176,6 +204,14 @@ public abstract class AbstractBotTask implements BotTaskInterface {
         return String.format("%1$dh %2$dm %3$ds", hours, minute, second);
     }
 
+    /**
+     * Calculate the time between "now" and the execution time.
+     *
+     * @param targetHour
+     * @param targetMin
+     * @param targetSec
+     * @return
+     */
     private long computeNextDelay(int targetHour, int targetMin, int targetSec) {
         ZonedDateTime zonedNow = localeDateTime();
         ZonedDateTime zonedNextTarget = zonedNow.withHour(targetHour)
@@ -198,10 +234,20 @@ public abstract class AbstractBotTask implements BotTaskInterface {
         return duration.getSeconds();
     }
 
+    /**
+     * Get the current date/time in the local time zone
+     *
+     * @return
+     */
     private static ZonedDateTime localeDateTime() {
         return ZonedDateTime.now(TIMEZONE);
     }
 
+    /**
+     * Return the current date/time formatted for printing
+     *
+     * @return
+     */
     protected static final String formattedDateTime() {
         return localeDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
