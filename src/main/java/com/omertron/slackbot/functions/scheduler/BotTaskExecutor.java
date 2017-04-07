@@ -21,6 +21,8 @@ package com.omertron.slackbot.functions.scheduler;
 
 import com.omertron.slackbot.Constants;
 import com.omertron.slackbot.SlackBot;
+import com.ullink.slack.simpleslackapi.SlackChannel;
+import com.ullink.slack.simpleslackapi.SlackPreparedMessage;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,10 +51,43 @@ public class BotTaskExecutor {
     }
 
     public BotTaskExecutor(SlackSession session) {
-        TASKS.add(new MeetupBotTask(EXECUTOR_SERVICE, "MEETUP", START_HOUR, START_MIN, session, session.findChannelByName("general")));
-        TASKS.add(new WbbBotTask(EXECUTOR_SERVICE, "WBB", START_HOUR, START_MIN, session, session.findChannelById("G3QQES762")));
+        LOG.info("Start time: {}", String.format("%1$-2d:%2$-2d", START_HOUR, START_MIN));
+
+        initTask(session, session.findChannelByName("general"), "MEETUP");
+        initTask(session, session.findChannelById("G3QQES762"), "WBB");
 
         startAll();
+    }
+
+    /**
+     * Generic method to create the task
+     *
+     * @param session
+     * @param channel
+     * @param name
+     */
+    private void initTask(SlackSession session, SlackChannel channel, String name) {
+        if (channel == null) {
+            LOG.warn("Failed to start task '{}'", name);
+        } else {
+            TASKS.add(new MeetupBotTask(EXECUTOR_SERVICE, name, START_HOUR, START_MIN, session, channel));
+        }
+    }
+
+    /**
+     * Get the status of all the tasks
+     *
+     * @return
+     */
+    public static SlackPreparedMessage status() {
+        SlackPreparedMessage.Builder message = new SlackPreparedMessage.Builder();
+        message.withMessage("Status of the " + TASKS.size() + " tasks running");
+
+        for (BotTaskInterface bti : TASKS) {
+            message.addAttachment(bti.getStatus());
+        }
+
+        return message.build();
     }
 
     /**
