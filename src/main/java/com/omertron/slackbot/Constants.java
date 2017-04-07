@@ -38,7 +38,7 @@ public final class Constants {
     public static final String BOT_START_HOUR = "botStartHour";
     public static final String BOT_START_MIN = "botStartMin";
 
-    public static final String ATTACH_COLOUR = "good";
+    public static final String ATTACH_COLOUR_GOOD = "good";
 
     // Proxy property names for property file
     public static final String PROXY_HOST = "proxyHost";
