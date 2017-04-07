@@ -35,6 +35,9 @@ public final class Constants {
     public static final String BOT_ADMINS = "botAdmins";
     public static final String DELIM_LEFT = "[";
     public static final String DELIM_RIGHT = "]";
+    public static final String BOT_START_HOUR = "botStartHour";
+    public static final String BOT_START_MIN = "botStartMin";
+
     public static final String ATTACH_COLOUR = "good";
 
     // Proxy property names for property file

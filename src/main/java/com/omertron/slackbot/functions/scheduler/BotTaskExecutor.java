@@ -19,12 +19,14 @@
  */
 package com.omertron.slackbot.functions.scheduler;
 
+import com.omertron.slackbot.Constants;
+import com.omertron.slackbot.SlackBot;
 import com.ullink.slack.simpleslackapi.SlackSession;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,23 +36,21 @@ import org.slf4j.LoggerFactory;
 public class BotTaskExecutor {
 
     private static final Logger LOG = LoggerFactory.getLogger(BotTaskExecutor.class);
-    private static final ZoneId TIMEZONE = ZoneId.of("Europe/London");
-    private static final int START_HOUR = 8;
-    private static final int START_MIN = 30;
+    private static final int START_HOUR;
+    private static final int START_MIN;
 
     // Get a single thread to execute the messages
     private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(1);
     private static final List<BotTaskInterface> TASKS = new ArrayList<>();
 
-    public BotTaskExecutor(SlackSession session) {
-//        ZonedDateTime zdt = ZonedDateTime.now(TIMEZONE).plusMinutes(2);
-//
-//        int hour = zdt.getHour();
-//        int min = zdt.getMinute();
+    static {
+        START_HOUR = NumberUtils.toInt(SlackBot.getProperty(Constants.BOT_START_HOUR, "8"), 8);
+        START_MIN = NumberUtils.toInt(SlackBot.getProperty(Constants.BOT_START_MIN, "30"), 30);
+    }
 
+    public BotTaskExecutor(SlackSession session) {
         TASKS.add(new MeetupBotTask(EXECUTOR_SERVICE, "MEETUP", START_HOUR, START_MIN, session, session.findChannelByName("general")));
-        // G3QQES762
-//        TASKS.add(new WbbBotTask(EXECUTOR_SERVICE, "WBB", hour, min, session, session.findChannelByName("random")));
+        TASKS.add(new WbbBotTask(EXECUTOR_SERVICE, "WBB", START_HOUR, START_MIN, session, session.findChannelById("G3QQES762")));
 
         startAll();
     }

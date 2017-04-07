@@ -19,23 +19,26 @@
  */
 package com.omertron.slackbot.model.sheets;
 
-import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SheetInfo {
 
     private static final Logger LOG = LoggerFactory.getLogger(SheetInfo.class);
+    private static final String SHEET_FORMAT_STRING = "EEE, d MMM yy";
+    private static final String DEFAULT_DATE_FORMAT = "d MMM yy";
+    private static final DateTimeFormatter SHEET_DATE_FORMAT = DateTimeFormatter.ofPattern(SHEET_FORMAT_STRING);
+
     private int lastRow;
     private int nextGameId;
     private String gameImageUrl;
@@ -43,7 +46,7 @@ public class SheetInfo {
     private String pinHolder;
     private String gameChooser;
     private String gameName;
-    private Date gameDate;
+    private LocalDate gameDate;
     private String nextChooser;
     private List<PlayerInfo> players = new ArrayList<>();
     // Cached lists
@@ -85,11 +88,10 @@ public class SheetInfo {
         }
         if (key.startsWith("NEXT DATE")) {
             try {
-                gameDate = DateUtils.parseDate(value.substring(5), "dd MMM yy");
-            } catch (ParseException ex) {
+                gameDate = LocalDate.parse(value, SHEET_DATE_FORMAT);
+            } catch (DateTimeParseException ex) {
                 LOG.info("Failed to parse date: '{}'", ex.getMessage());
             }
-
             return true;
         }
         if (key.startsWith("NEXT CHOOSER")) {
@@ -155,15 +157,20 @@ public class SheetInfo {
         this.gameName = gameName;
     }
 
-    public String getFormattedDate() {
-        return getFormattedDate("dd MMM yy");
-    }
-    
-    public String getFormattedDate(String format) {
-        return DateFormatUtils.format(gameDate, format);
+    public LocalDate getGameDate() {
+        return gameDate;
     }
 
-    public void setGameDate(Date gameDate) {
+    public String getFormattedDate() {
+        return getFormattedDate(DEFAULT_DATE_FORMAT);
+    }
+
+    public String getFormattedDate(String format) {
+        return gameDate.format(DateTimeFormatter.ofPattern(format));
+//        return DateFormatUtils.format(gameDate, format);
+    }
+
+    public void setGameDate(LocalDate gameDate) {
         this.gameDate = gameDate;
     }
 

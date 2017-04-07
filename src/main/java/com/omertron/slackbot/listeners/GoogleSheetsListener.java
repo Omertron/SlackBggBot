@@ -21,11 +21,11 @@ package com.omertron.slackbot.listeners;
 
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.omertron.slackbot.Constants;
+import com.omertron.slackbot.functions.GoogleSheets;
 import com.omertron.slackbot.model.HelpInfo;
 import com.omertron.slackbot.model.sheets.GameLogRow;
 import com.omertron.slackbot.model.sheets.PlayerInfo;
 import com.omertron.slackbot.model.sheets.SheetInfo;
-import com.omertron.slackbot.functions.GoogleSheets;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackSession;
@@ -136,17 +136,22 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         String msgContent = event.getMessageContent();
         Matcher m = PAT_SHEETS.matcher(msgContent);
         if (m.matches()) {
-            String command = m.group(1) == null ? "HELP" : m.group(1).toUpperCase().trim();
+            String command = StringUtils.trimToNull(m.group(1)) == null ? "HELP" : m.group(1).toUpperCase().trim();
             String params = StringUtils.trimToNull(m.group(2));
             LOG.info("Command '{}' & params '{}'", command, params);
+
+            // Do an initial read of the sheet information
+            if (sheetInfo == null) {
+                readSheetInfo();
+            }
 
             switch (command) {
                 case "HELP":
                     session.sendMessage(msgChannel, "", helpMessage);
                     break;
                 case "NEXT":
-                    processNextGame();
-                    session.sendMessage(msgChannel, "", createNextGameInfo(sheetInfo));
+                    readSheetInfo();
+                    session.sendMessage(msgChannel, "", createGameInfo(sheetInfo));
                     break;
                 case "ADD":
                     addNameToNextGame(session, msgChannel, params, msgSender);
@@ -193,12 +198,24 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     }
 
     /**
+     * Get the sheet information
+     *
+     * @return
+     */
+    public static SheetInfo getSheetInfo() {
+        if (sheetInfo == null) {
+            readSheetInfo();
+        }
+        return sheetInfo;
+    }
+
+    /**
      * Retrieve and display the next game information from the sheet
      *
      * @param session
      * @param msgChannel
      */
-    private void processNextGame() {
+    private static void readSheetInfo() {
         sheetInfo = new SheetInfo();
         ValueRange response = GoogleSheets.getSheetData(SS_ID, RANGE_NEXT_GAME_DATA);
 
@@ -234,7 +251,20 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
      * @param sheetInfo
      * @return
      */
-    private SlackAttachment createNextGameInfo(SheetInfo sheetInfo) {
+    public static SlackAttachment createGameInfo() {
+        if (sheetInfo == null) {
+            readSheetInfo();
+        }
+        return createGameInfo(sheetInfo);
+    }
+
+    /**
+     * Generate the next game attachment
+     *
+     * @param sheetInfo
+     * @return
+     */
+    public static SlackAttachment createGameInfo(SheetInfo sheetInfo) {
         SlackAttachment sa = new SlackAttachment();
 
         if (sheetInfo.getNextGameId() > 0) {
@@ -313,7 +343,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
      * @param search Name to search for
      * @return The closest match for the search name
      */
-    private PlayerInfo findPlayer(final String player) {
+    private static PlayerInfo findPlayer(final String player) {
         String search = StringUtils.trimToEmpty(player).toUpperCase();
         LOG.info("Searching for player '{}'", search);
 
@@ -357,7 +387,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     private void addNameToNextGame(SlackSession session, SlackChannel msgChannel, final String nameToAdd, final SlackUser requestor) {
         // If we have no sheet informatiom, then populate it
         if (sheetInfo == null) {
-            processNextGame();
+            readSheetInfo();
         }
 
         LOG.info("Current player list: {}", sheetInfo.getInitialList());
@@ -397,7 +427,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     private void removeNameFromNextGame(SlackSession session, SlackChannel msgChannel, final String nameToAdd, final SlackUser requestor) {
         // If we have no sheet informatiom, then populate it
         if (sheetInfo == null) {
-            processNextGame();
+            readSheetInfo();
         }
 
         LOG.info("Current player list: {}", sheetInfo.getInitialList());
@@ -432,7 +462,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
      * @param row Row to read
      * @return Values in an object
      */
-    private GameLogRow readGameLogRow(int row) {
+    private static GameLogRow readGameLogRow(int row) {
         String sheetRow = String.format("Game Log!A%1$d:I%1$d", row);
         LOG.info("Getting data from '{}'", sheetRow);
         ValueRange vr = GoogleSheets.getSheetData(SS_ID, sheetRow);
