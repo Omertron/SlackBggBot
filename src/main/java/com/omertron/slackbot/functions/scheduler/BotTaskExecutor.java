@@ -50,28 +50,29 @@ public class BotTaskExecutor {
         START_MIN = NumberUtils.toInt(SlackBot.getProperty(Constants.BOT_START_MIN, "30"), 30);
     }
 
+    /**
+     * Start the required bot tasks
+     *
+     * @param session
+     */
     public BotTaskExecutor(SlackSession session) {
         LOG.info("Start time: {}", String.format("%1$-2d:%2$-2d", START_HOUR, START_MIN));
 
-        initTask(session, session.findChannelByName("general"), "MEETUP");
-        initTask(session, session.findChannelById("G3QQES762"), "WBB");
+        SlackChannel channel = session.findChannelByName("general");
+        if (channel == null) {
+            LOG.warn("Failed to start MEETUP task");
+        } else {
+            TASKS.add(new MeetupBotTask(EXECUTOR_SERVICE, "MEETUP", START_HOUR, START_MIN, session, channel));
+        }
+
+        channel = session.findChannelById("G3QQES762");
+        if (channel == null) {
+            LOG.warn("Failed to start WBB task");
+        } else {
+            TASKS.add(new WbbBotTask(EXECUTOR_SERVICE, "WBB", START_HOUR, START_MIN, session, channel));
+        }
 
         startAll();
-    }
-
-    /**
-     * Generic method to create the task
-     *
-     * @param session
-     * @param channel
-     * @param name
-     */
-    private void initTask(SlackSession session, SlackChannel channel, String name) {
-        if (channel == null) {
-            LOG.warn("Failed to start task '{}'", name);
-        } else {
-            TASKS.add(new MeetupBotTask(EXECUTOR_SERVICE, name, START_HOUR, START_MIN, session, channel));
-        }
     }
 
     /**
