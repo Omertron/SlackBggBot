@@ -160,7 +160,7 @@ public class StatHolder {
         if (detailed) {
             output.append(" - total: ").append(total).append("\n");
             for (Map.Entry<String, Integer> stat : usage.entrySet()) {
-                output.append("\t").append(stat.getKey()).append(" - ").append(stat.getValue()).append("\n");
+                output.append("\t").append(stat.getKey()).append("\t\t- ").append(stat.getValue()).append("\n");
             }
         } else {
             output.append(": ").append(total).append("\n");
