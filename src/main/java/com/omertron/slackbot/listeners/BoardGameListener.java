@@ -204,29 +204,13 @@ public class BoardGameListener implements SlackMessagePostedListener {
             BotStatistics.writeFile();
             switch (command) {
                 case "QUIT":
-                    session.sendMessage(msgChannel, "Bot will now quit :disappointed:");
-                    BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
-                    com.omertron.slackbot.SlackBot.shutdown(0);
+                    adminQuitRestart(session, msgChannel, msgSender, true);
                     break;
                 case "RESTART":
-                    session.sendMessage(msgChannel, "Bot will now attempt to restart :relieved:");
-                    BotStatistics.increment(StatCategory.ADMIN, msgSender.getUserName());
-                    com.omertron.slackbot.SlackBot.shutdown(1);
+                    adminQuitRestart(session, msgChannel, msgSender, false);
                     break;
                 case "WELCOME":
-                    String user = StringUtils.trimToEmpty(params);
-                    if ("WHO".equalsIgnoreCase(user)) {
-                        BotWelcome.listUsers(session, msgChannel);
-                        break;
-                    }
-
-                    SlackUser slackUser = session.findUserByUserName(user);
-                    if (slackUser == null) {
-                        session.sendMessage(msgChannel, String.format("No user with username '%1$s' found", user));
-                    } else {
-                        session.sendMessage(msgChannel, "Sending welcome message to " + slackUser.getUserName());
-                        BotWelcome.sendWelcomeMessage(session, msgChannel, slackUser);
-                    }
+                    adminWelcome(params, session, msgChannel);
                     break;
                 default:
                     LOG.info("Unknown command '{}' received from {}", command, msgSender.getUserName());
@@ -237,8 +221,52 @@ public class BoardGameListener implements SlackMessagePostedListener {
     }
 
     /**
-     * Add a reaction to the message that called us and send the "typing..."
-     * indicator
+     * Quit or restart the bot
+     *
+     * @param session
+     * @param channel
+     * @param sender
+     * @param quit
+     */
+    private void adminQuitRestart(SlackSession session, SlackChannel channel, SlackUser sender, boolean quit) {
+        if (quit) {
+            session.sendMessage(channel, "Bot will now quit :disappointed:");
+        } else {
+            session.sendMessage(channel, "Bot will now attempt to restart :relieved:");
+        }
+
+        // Update the stats
+        BotStatistics.increment(StatCategory.ADMIN, sender.getUserName());
+
+        // Quit or restart the bot
+        com.omertron.slackbot.SlackBot.shutdown(quit ? 0 : 1);
+    }
+
+    /**
+     * Send out a welcome message.
+     *
+     * @param params
+     * @param session
+     * @param channel
+     */
+    private void adminWelcome(String params, SlackSession session, SlackChannel channel) {
+        String user = StringUtils.trimToEmpty(params);
+        if ("WHO".equalsIgnoreCase(user)) {
+            BotWelcome.listUsers(session, channel);
+            return;
+        }
+
+        SlackUser slackUser = session.findUserByUserName(user);
+        if (slackUser == null) {
+            session.sendMessage(channel, String.format("No user with username '%1$s' found", user));
+        } else {
+            session.sendMessage(channel, "Sending welcome message to " + slackUser.getUserName());
+            BotWelcome.sendWelcomeMessage(session, channel, slackUser);
+        }
+    }
+
+    /**
+     * Add a reaction to the message that called us and send the "typing..." indicator
      *
      * @param session
      * @param msgChannel
@@ -773,13 +801,13 @@ public class BoardGameListener implements SlackMessagePostedListener {
         try {
             Meetup.readMeetUp(muQuantity);
         } catch (ApiException ex) {
-            LOG.warn("Failed to read data from meetup: {}", ex.getMessage());
+            LOG.warn("Failed to read data from meetup: {}", ex.getMessage(), ex);
             com.omertron.slackbot.SlackBot.messageAdmins(session, "Failed to read data from meetup: " + ex.getMessage());
             return;
         }
 
         Meetup.getMeetupsDays(7, false);
-        
+
         List<SlackAttachment> attach = Meetup.getMeetupsQty(muQuantity, muDetailed);
         SlackPreparedMessage preparedMessage = new SlackPreparedMessage.Builder()
                 .addAttachments(attach)

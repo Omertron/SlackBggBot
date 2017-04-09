@@ -52,6 +52,7 @@ public class MeetupBotTask extends AbstractBotTask {
             // Read the next three meetups
             Meetup.readMeetUp(3);
         } catch (ApiException ex) {
+            LOG.warn("Failed to read meetups in MeetupBotTask: {}", ex.getMessage(), ex);
             SlackBot.messageAdmins(getSession(), "Failed to read meetups in MeetupBotTask: " + ex.getMessage());
         }
 

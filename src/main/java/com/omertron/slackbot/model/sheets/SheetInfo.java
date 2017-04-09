@@ -90,7 +90,7 @@ public class SheetInfo {
             try {
                 gameDate = LocalDate.parse(value, SHEET_DATE_FORMAT);
             } catch (DateTimeParseException ex) {
-                LOG.info("Failed to parse date: '{}'", ex.getMessage());
+                LOG.info("Failed to parse date: '{}'", ex.getMessage(), ex);
             }
             return true;
         }

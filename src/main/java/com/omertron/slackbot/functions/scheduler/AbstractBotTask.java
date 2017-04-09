@@ -51,7 +51,7 @@ public abstract class AbstractBotTask implements BotTaskInterface {
     private final String name;
     private final int targetHour;
     private final int targetMin;
-    private final int targetSec = 0;
+    private final static int TARGET_SEC = 0;
     private final AtomicInteger completedTasks = new AtomicInteger(0);
     private volatile boolean isBusy = false;
 
@@ -95,7 +95,7 @@ public abstract class AbstractBotTask implements BotTaskInterface {
         return channel;
     }
 
-    public final ScheduledFuture<?> getScheduledTask() {
+    public final ScheduledFuture getScheduledTask() {
         return scheduledTask;
     }
 
@@ -178,7 +178,7 @@ public abstract class AbstractBotTask implements BotTaskInterface {
      */
     private void scheduleNextTask(Runnable task) {
         LOG.info("{} creating next schedule at {}", name, formattedDateTime());
-        long delay = computeNextDelay(targetHour, targetMin, targetSec);
+        long delay = computeNextDelay(targetHour, targetMin, TARGET_SEC);
         LOG.info("{} is next scheduled in {}", name, formatSeconds(delay));
         scheduledTask = executorService.schedule(task, delay, TimeUnit.SECONDS);
     }

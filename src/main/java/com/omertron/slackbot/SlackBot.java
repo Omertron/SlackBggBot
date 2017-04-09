@@ -115,9 +115,7 @@ public class SlackBot {
                 break;
             default:
                 List<String> names = new ArrayList<>();
-                BOT_ADMINS.forEach((su) -> {
-                    names.add(su.getUserName());
-                });
+                BOT_ADMINS.forEach(su -> names.add(su.getUserName()));
                 LOG.info("\tThere are {} BOT admins: {}", BOT_ADMINS.size(), StringUtils.join(names, ","));
         }
     }
@@ -133,8 +131,7 @@ public class SlackBot {
     }
 
     /**
-     * Send a start up message to all BOT admins to inform them of the bot's
-     * restart
+     * Send a start up message to all BOT admins to inform them of the bot's restart
      *
      * @param session
      */

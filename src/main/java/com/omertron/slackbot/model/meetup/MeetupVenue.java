@@ -25,9 +25,9 @@ import com.omertron.slackbot.model.AbstractJsonMapping;
 public class MeetupVenue extends AbstractJsonMapping {
 
     @JsonProperty("address_1")
-    private String address_1;
+    private String address1;
     @JsonProperty("address_2")
-    private String address_2;
+    private String address2;
     @JsonProperty("city")
     private String city;
     @JsonProperty("country")
@@ -45,20 +45,20 @@ public class MeetupVenue extends AbstractJsonMapping {
     @JsonProperty("repinned")
     private Boolean repinned;
 
-    public String getAddress_1() {
-        return address_1;
+    public String getAddress1() {
+        return address1;
     }
 
-    public void setAddress_1(String address_1) {
-        this.address_1 = address_1;
+    public void setAddress1(String address1) {
+        this.address1 = address1;
     }
 
-    public String getAddress_2() {
-        return address_2;
+    public String getAddress2() {
+        return address2;
     }
 
-    public void setAddress_2(String address_2) {
-        this.address_2 = address_2;
+    public void setAddress2(String address2) {
+        this.address2 = address2;
     }
 
     public String getCity() {
