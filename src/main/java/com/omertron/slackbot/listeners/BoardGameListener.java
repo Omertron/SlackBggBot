@@ -604,41 +604,45 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         LOG.info(logMessage, username, result.size());
         session.sendMessage(msgChannel, attMessage);
+        result.forEach((game) -> collList.add(createGameAttachment(game)));
+        return collList;
+    }
 
-        SlackAttachment sa;
-        for (CollectionItem game : result) {
-            sa = new SlackAttachment();
-            String year = game.getYearPublished() == null ? UNKNOWN : " (" + game.getYearPublished() + ")";
+    /**
+     * Format the collection item (game) into an attachment
+     *
+     * @param game
+     * @return
+     */
+    private SlackAttachment createGameAttachment(CollectionItem game) {
+        SlackAttachment sa = new SlackAttachment();
+        String year = game.getYearPublished() == null ? UNKNOWN : " (" + game.getYearPublished() + ")";
 
-            sa.setFallback(INFORMATION_ON + game.getName());
-            sa.setTitle(game.getName() + year);
-            sa.setTitleLink(Constants.BGG_GAME_LINK + game.getObjectId());
-            sa.setAuthorIcon(game.getThumbnail());
-            sa.setText(StringEscapeUtils.unescapeHtml4(game.getComment()));
-            sa.setColor(Constants.ATTACH_COLOUR_GOOD);
-            sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
-            sa.addField(BGG_ID, String.valueOf(game.getObjectId()), true);
-            if (game.getStats() != null && game.getStats().getRating() != null) {
-                float value = game.getStats().getRating().getValue();
-                sa.addField("Rating", "" + (value > 0 ? value : "Not Rated"), true);
-            }
-
-            if (game.getNumPlays() > 0) {
-                sa.addField("Num Plays", "" + game.getNumPlays(), true);
-            }
-
-            LOG.info("Owner Status: {}", game.getOwnerStatus().toString());
-
-            List<String> status = calculateStatus(game.getOwnerStatus());
-            if (!status.isEmpty()) {
-                sa.addField("Owner Status", StringUtils.join(status, ","), true);
-            }
-            LOG.info("Status: {}", status.toString());
-
-            collList.add(sa);
+        sa.setFallback(INFORMATION_ON + game.getName());
+        sa.setTitle(game.getName() + year);
+        sa.setTitleLink(Constants.BGG_GAME_LINK + game.getObjectId());
+        sa.setAuthorIcon(game.getThumbnail());
+        sa.setText(StringEscapeUtils.unescapeHtml4(game.getComment()));
+        sa.setColor(Constants.ATTACH_COLOUR_GOOD);
+        sa.setThumbUrl(formatHttpLink(game.getThumbnail()));
+        sa.addField(BGG_ID, String.valueOf(game.getObjectId()), true);
+        if (game.getStats() != null && game.getStats().getRating() != null) {
+            float value = game.getStats().getRating().getValue();
+            sa.addField("Rating", "" + (value > 0 ? value : "Not Rated"), true);
         }
 
-        return collList;
+        if (game.getNumPlays() > 0) {
+            sa.addField("Num Plays", "" + game.getNumPlays(), true);
+        }
+
+        LOG.info("Owner Status: {}", game.getOwnerStatus().toString());
+
+        List<String> status = calculateStatus(game.getOwnerStatus());
+        if (!status.isEmpty()) {
+            sa.addField("Owner Status", StringUtils.join(status, ","), true);
+        }
+        LOG.info("Status: {}", status.toString());
+        return sa;
     }
 
     /**

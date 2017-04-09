@@ -128,13 +128,11 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     public void onEvent(SlackMessagePosted event, SlackSession session) {
         // Channel On Which Message Was Posted
         SlackChannel msgChannel = event.getChannel();
-        SlackUser msgSender = event.getSender();
-        if (!authenticate(session, msgChannel, msgSender)) {
+        if (!authenticate(session, msgChannel, event.getSender())) {
             return;
         }
 
-        String msgContent = event.getMessageContent();
-        Matcher m = PAT_SHEETS.matcher(msgContent);
+        Matcher m = PAT_SHEETS.matcher(event.getMessageContent());
         if (m.matches()) {
             String command = StringUtils.trimToNull(m.group(1)) == null ? "HELP" : m.group(1).toUpperCase().trim();
             String params = StringUtils.trimToNull(m.group(2));
@@ -154,10 +152,10 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
                     session.sendMessage(msgChannel, "", createGameInfo(sheetInfo));
                     break;
                 case "ADD":
-                    addNameToNextGame(session, msgChannel, params, msgSender);
+                    addNameToNextGame(session, msgChannel, params, event.getSender());
                     break;
                 case "REMOVE":
-                    removeNameFromNextGame(session, msgChannel, params, msgSender);
+                    removeNameFromNextGame(session, msgChannel, params, event.getSender());
                     break;
                 case "GAME":
                     updateGameName(session, msgChannel, params);

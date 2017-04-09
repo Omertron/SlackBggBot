@@ -167,7 +167,6 @@ public class SheetInfo {
 
     public String getFormattedDate(String format) {
         return gameDate.format(DateTimeFormatter.ofPattern(format));
-//        return DateFormatUtils.format(gameDate, format);
     }
 
     public void setGameDate(LocalDate gameDate) {
