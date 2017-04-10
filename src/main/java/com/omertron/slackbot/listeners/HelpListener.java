@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author stuar
+ * @author Omertron
  */
 public class HelpListener implements SlackMessagePostedListener {
 

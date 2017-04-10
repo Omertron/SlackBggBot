@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Class to store any statistics about the bot
  *
- * @author stuart
+ * @author Omertron
  */
 public final class BotStatistics {
 

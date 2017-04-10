@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Get the Git Repository State information from the maven-git-commit-id plugin
  *
- * @author Stuart
+ * @author Omertron
  */
 public class GitRepositoryState {
 
