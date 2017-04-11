@@ -121,12 +121,15 @@ public class Meetup {
 
         Period diff;
         for (MeetupDetails md : MEETUPS) {
-            diff = Period.between(now, md.getTime().toLocalDate());
+            // Correct for BST
+            LocalDateTime meetTime = md.getTime().plusHours(1);
+            
+            diff = Period.between(now, meetTime.toLocalDate());
             if (diff.getDays() <= daysAhead) {
-                LOG.info("Add: Days: {} - {} - {}", diff.getDays(), md.getTime().format(DT_FORMAT), md.getName());
-                results.put(md.getTime(), makeSlackAttachment(md, detailed));
+                LOG.info("Add: Days: {} - {} - {}", diff.getDays(), meetTime.format(DT_FORMAT), md.getName());
+                results.put(meetTime, makeSlackAttachment(md, detailed));
             } else {
-                LOG.info("Skip: Days: {} - {} - {}", diff.getDays(), md.getTime().format(DT_FORMAT), md.getName());
+                LOG.info("Skip: Days: {} - {} - {}", diff.getDays(), meetTime.format(DT_FORMAT), md.getName());
             }
         }
 
@@ -158,7 +161,9 @@ public class Meetup {
             sa.addField("Venue", meetupDetails.getVenue().getName(), true);
         }
 
-        sa.addField("Date", meetupDetails.getTime().format(DT_FORMAT), true);
+        // Correct for BST
+        LocalDateTime meetTime = meetupDetails.getTime().plusHours(1);
+        sa.addField("Date", meetTime.format(DT_FORMAT), true);
 
         if (meetupDetails.getHowToFindUs() != null && detailed) {
             sa.addField("How to find us", meetupDetails.getHowToFindUs(), false);
