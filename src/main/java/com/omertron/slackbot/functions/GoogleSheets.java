@@ -30,6 +30,7 @@ import com.google.api.services.sheets.v4.model.ValueRange;
 import com.omertron.slackbot.Constants;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +57,7 @@ public class GoogleSheets {
      * Static instance of the sheet
      */
     private static Sheets sheets = null;
+    private static final int MAX_RETRY = 5;
 
     private GoogleSheets() {
         throw new UnsupportedOperationException("Static class");
@@ -132,12 +134,20 @@ public class GoogleSheets {
      */
     public static ValueRange getSheetData(final String sheetId, final String range) {
         LOG.info("Getting information from range {}", range);
-        try {
-            return sheets.spreadsheets().values()
-                    .get(sheetId, range)
-                    .execute();
-        } catch (IOException ex) {
-            LOG.info("IO Exception: {}", ex.getMessage(), ex);
+        int retryCount = 1;
+        boolean readSuccessful = false;
+
+        while (!readSuccessful && retryCount++ <= MAX_RETRY) {
+            try {
+                return sheets.spreadsheets().values()
+                        .get(sheetId, range)
+                        .execute();
+            } catch (SocketTimeoutException ex) {
+                LOG.warn("Attempt #{}: Timed out reading from sheet. {} attempts left",
+                        retryCount, MAX_RETRY - retryCount, ex);
+            } catch (IOException ex) {
+                LOG.warn("IO Exception: {}", ex.getMessage(), ex);
+            }
         }
         return null;
     }
