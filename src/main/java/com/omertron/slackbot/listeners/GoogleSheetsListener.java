@@ -267,7 +267,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
 
         if (sheetInfo.getNextGameId() > 0) {
             sa.setTitle(sheetInfo.getGameName());
-            sa.setTitleLink(Constants.BGG_GAME_LINK + sheetInfo.getNextGameId());
+            sa.setTitleLink(Constants.BGG_LINK_GAME + sheetInfo.getNextGameId());
             sa.setFallback(sheetInfo.getGameName() + " for " + sheetInfo.getFormattedDate("EEE dd MMM"));
             sa.setAuthorName("Chosen by " + sheetInfo.getGameChooser());
         } else {

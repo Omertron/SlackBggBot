@@ -21,10 +21,12 @@ package com.omertron.slackbot.listeners;
 
 import com.omertron.bgg.BggApi;
 import com.omertron.bgg.BggException;
+import com.omertron.bgg.enums.HotItemType;
 import com.omertron.bgg.enums.IncludeExclude;
 import com.omertron.bgg.model.BoardGameExtended;
 import com.omertron.bgg.model.CollectionItem;
 import com.omertron.bgg.model.CollectionItemWrapper;
+import com.omertron.bgg.model.HotListItem;
 import com.omertron.bgg.model.IdValue;
 import com.omertron.bgg.model.OwnerStatus;
 import com.omertron.bgg.model.RankedList;
@@ -55,7 +57,7 @@ import org.yamj.api.common.exception.ApiException;
 
 /**
  *
- * @author stuar
+ * @author Omertron
  */
 public class BoardGameListener implements SlackMessagePostedListener {
 
@@ -83,7 +85,9 @@ public class BoardGameListener implements SlackMessagePostedListener {
         commands.add("user");
         HelpListener.addHelpMessage(20, "user", USERNAME, "Get information on a BGG user.", false);
         commands.add("meetup");
-        HelpListener.addHelpMessage(30, "meetup", new String[]{"Quantity", "DETAILED"}, "Get a list of the *<Quantity>* upcoming MeetUps.\nAdd the *<Detailed>* keyword to get more information.", false);
+        HelpListener.addHelpMessage(25, "meetup", new String[]{"Quantity", "DETAILED"}, "Get a list of the *<Quantity>* upcoming MeetUps.\nAdd the *<Detailed>* keyword to get more information.", false);
+        commands.add("hot");
+        HelpListener.addHelpMessage(25, "hot", new String[]{"boardgame", "person", "company"}, "Get the top 10 items from the category passed.\nDefault, if empty, is boardgames.", false);
 
         String regex = new StringBuilder("(?i)")
                 .append("\\").append(DELIM_LEFT).append("\\").append(DELIM_LEFT)
@@ -182,6 +186,10 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 BotStatistics.increment(StatCategory.MEETUP, msgSender.getUserName());
                 commandMeetup(session, msgChannel, query);
                 break;
+            case "HOT":
+                botUpdateChannel(session, msgChannel, event);
+                BotStatistics.increment(StatCategory.HOT, msgSender.getUserName());
+                commandHotList(session, msgChannel, query);
             default:
                 LOG.info("Unknown command '" + command + "' found. Ignoring.");
         }
@@ -405,7 +413,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         SlackAttachment sa = new SlackAttachment();
         sa.setFallback("User information on " + username);
         sa.setTitle(StringUtils.joinWith(" ", result.getFirstName(), result.getLastName()));
-        sa.setTitleLink(Constants.BGG_USER_LINK + result.getName());
+        sa.setTitleLink(Constants.BGG_LINK_USER + result.getName());
         sa.setAuthorIcon(formatHttpLink(result.getAvatarLink()));
         sa.setColor(Constants.ATTACH_COLOUR_GOOD);
         sa.addField("Year Registered", "" + result.getYearRegistered(), true);
@@ -541,7 +549,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         SlackAttachment sa = new SlackAttachment();
         sa.setFallback(String.format(collectionFormat, username, partCount, totalParts));
         sa.setTitle(String.format(collectionFormat, username, partCount, totalParts));
-        sa.setTitleLink(Constants.BGG_COLL_LINK + username);
+        sa.setTitleLink(Constants.BGG_LINK_COLL + username);
         sa.setColor(Constants.ATTACH_COLOUR_GOOD);
 
         List<SlackAttachment> collList = new ArrayList<>();
@@ -559,14 +567,14 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 partCount++;
                 sa.setFallback(String.format(collectionFormat, username, partCount, totalParts));
                 sa.setAuthorName(String.format(collectionFormat, username, partCount, totalParts));
-                sa.setAuthorLink(Constants.BGG_COLL_LINK + username);
+                sa.setAuthorLink(Constants.BGG_LINK_COLL + username);
                 sa.setColor(Constants.ATTACH_COLOUR_GOOD);
             }
 
             sb.append(String.format("%1$s (%2$s) - <%3$s%4$d|%4$d>\n",
                     item.getName(),
                     item.getYearPublished(),
-                    Constants.BGG_GAME_LINK,
+                    Constants.BGG_LINK_GAME,
                     item.getObjectId()));
         }
         sa.setText(sb.toString());
@@ -620,7 +628,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         sa.setFallback(INFORMATION_ON + game.getName());
         sa.setTitle(game.getName() + year);
-        sa.setTitleLink(Constants.BGG_GAME_LINK + game.getObjectId());
+        sa.setTitleLink(Constants.BGG_LINK_GAME + game.getObjectId());
         sa.setAuthorIcon(game.getThumbnail());
         sa.setText(StringEscapeUtils.unescapeHtml4(game.getComment()));
         sa.setColor(Constants.ATTACH_COLOUR_GOOD);
@@ -697,7 +705,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         SlackAttachment sa = new SlackAttachment();
         sa.setFallback(INFORMATION_ON + game.getPrimaryName());
         sa.setTitle(nameFormatted.toString());
-        sa.setTitleLink(Constants.BGG_GAME_LINK + game.getId());
+        sa.setTitleLink(Constants.BGG_LINK_GAME + game.getId());
         sa.setColor(Constants.ATTACH_COLOUR_GOOD);
 
         return sa;
@@ -715,7 +723,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         sa.setFallback(INFORMATION_ON + game.getName());
         sa.setAuthorName(game.getName() + year);
-        sa.setAuthorLink(Constants.BGG_GAME_LINK + game.getId());
+        sa.setAuthorLink(Constants.BGG_LINK_GAME + game.getId());
         sa.setAuthorIcon(game.getThumbnail());
         sa.setText(StringEscapeUtils.unescapeHtml4(game.getDescription()));
         sa.setColor(Constants.ATTACH_COLOUR_GOOD);
@@ -818,6 +826,95 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 .withMessage("These are the upcoming MeetUps:")
                 .build();
         session.sendMessage(msgChannel, preparedMessage);
+    }
+
+    /**
+     * Get the Hot List and format it
+     *
+     * @param session Session
+     * @param channel Channel
+     * @param param ItemType String
+     */
+    private void commandHotList(SlackSession session, SlackChannel channel, String param) {
+        HotItemType itemType = validateHotParam(param);
+        LOG.info("Getting hot list for '{}'", itemType.toString());
+
+        try {
+            List<HotListItem> results = BGG.getHotItems(itemType);
+
+            List<SlackAttachment> listAttach = new ArrayList<>();
+            for (HotListItem item : results) {
+                if (item.getRank() <= 10) {
+                    listAttach.add(convertHotListToAttach(itemType, item));
+                }
+            }
+
+            SlackPreparedMessage spm = new SlackPreparedMessage.Builder()
+                    .withMessage("Hot List for " + itemType.toString())
+                    .addAttachments(listAttach)
+                    .build();
+            session.sendMessage(channel, spm);
+        } catch (BggException ex) {
+            LOG.info("Failed to get Hot List for {}", itemType.toString(), ex);
+        }
+    }
+
+    /**
+     * Format a HotListItem into a SlackAttachment
+     *
+     * @param listItem HotListItem to format
+     * @return A SlackAttachment
+     */
+    private SlackAttachment convertHotListToAttach(HotItemType itemType, HotListItem listItem) {
+        SlackAttachment sa = new SlackAttachment();
+
+        sa.setColor(Constants.ATTACH_COLOUR_GOOD);
+        sa.setThumbUrl(formatHttpLink(listItem.getThumbnail()));
+        sa.setAuthorName("#" + listItem.getRank());
+
+        if (listItem.getYearPublished() == null || listItem.getYearPublished() == 0) {
+            sa.setTitle(listItem.getName());
+        } else {
+            sa.setTitle(String.format("%1$s (%2$d)", listItem.getName(), listItem.getYearPublished()));
+        }
+
+        switch (itemType) {
+            case BOARDGAME:
+                sa.setTitleLink(Constants.BGG_LINK_GAME + listItem.getId());
+                break;
+            case BOARDGAMECOMPANY:
+                sa.setTitleLink(Constants.BGG_LINK_PUBLISHER + listItem.getId());
+                break;
+            case BOARDGAMEPERSON:
+                sa.setTitleLink(Constants.BGG_LINK_DESIGNER + listItem.getId());
+                break;
+            default:
+        }
+
+        return sa;
+    }
+
+    /**
+     * Validate the source string passed and convert to a HotItemType enum
+     *
+     * @param source Source string to convert
+     * @return Matched HotItemType or default if unmatched
+     */
+    private HotItemType validateHotParam(String source) {
+        LOG.info("Validating/Converting '{}' to a HotListItem");
+        if (StringUtils.isBlank(source)) {
+            return HotItemType.BOARDGAME;
+        }
+
+        if (StringUtils.equalsIgnoreCase("boardgame", source)) {
+            return HotItemType.BOARDGAME;
+        } else if (StringUtils.equalsIgnoreCase("person", source)) {
+            return HotItemType.BOARDGAMEPERSON;
+        } else if (StringUtils.equalsIgnoreCase("company", source)) {
+            return HotItemType.BOARDGAMECOMPANY;
+        } else {
+            return HotItemType.BOARDGAME;
+        }
     }
 
 }

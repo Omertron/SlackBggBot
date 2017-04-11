@@ -283,7 +283,7 @@ public class HelpListener implements SlackMessagePostedListener {
             aboutMessage.setText(text.toString());
 
             aboutMessage.addField("Bot Version", Constants.BOT_VERSION, true);
-            aboutMessage.addField("Author", "Stuart Boston (<" + Constants.BGG_USER_LINK + "Omertron|Omertron>)", true);
+            aboutMessage.addField("Author", "Stuart Boston (<" + Constants.BGG_LINK_USER + "Omertron|Omertron>)", true);
 
             aboutMessage.addField("Build Version", "<https://github.com/Omertron/SlackBggBot|" + grs.getBuildVersion() + ">", true);
             aboutMessage.addField("Commit ID", grs.getCommitIdAbbrev(), true);

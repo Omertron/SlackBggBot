@@ -45,9 +45,11 @@ public final class Constants {
     public static final String PROXY_PORT = "proxyPort";
 
     // BGG Stuff
-    public static final String BGG_GAME_LINK = "https://boardgamegeek.com/boardgame/";
-    public static final String BGG_USER_LINK = "https://boardgamegeek.com/user/";
-    public static final String BGG_COLL_LINK = "https://boardgamegeek.com/collection/user/";
+    public static final String BGG_LINK_GAME = "https://boardgamegeek.com/boardgame/";
+    public static final String BGG_LINK_USER = "https://boardgamegeek.com/user/";
+    public static final String BGG_LINK_COLL = "https://boardgamegeek.com/collection/user/";
+    public static final String BGG_LINK_DESIGNER = "https://boardgamegeek.com/boardgamedesigner/";
+    public static final String BGG_LINK_PUBLISHER = "https://boardgamegeek.com/boardgamepublisher/";
 
     // Meetup stuff
     public static final String MEETUP_URL = "meetupUrl";
