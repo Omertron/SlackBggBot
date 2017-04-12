@@ -65,7 +65,7 @@ public class SlackBot {
         String proxyURL = PROPS.getProperty(Constants.PROXY_HOST);
         if (StringUtils.isNotBlank(proxyURL)) {
             int proxyPort = Integer.parseInt(PROPS.getProperty(Constants.PROXY_PORT, "80"));
-            session = SlackSessionFactory.createWebSocketSlackSession(PROPS.getProperty(Constants.BOT_TOKEN), Proxy.Type.HTTP, proxyURL, proxyPort);
+            session = SlackSessionFactory.getSlackSessionBuilder(Constants.BOT_TOKEN).withProxy(Proxy.Type.HTTP, proxyURL, proxyPort).build();
         } else {
             session = SlackSessionFactory.createWebSocketSlackSession(PROPS.getProperty(Constants.BOT_TOKEN));
         }
@@ -131,7 +131,8 @@ public class SlackBot {
     }
 
     /**
-     * Send a start up message to all BOT admins to inform them of the bot's restart
+     * Send a start up message to all BOT admins to inform them of the bot's
+     * restart
      *
      * @param session
      */
