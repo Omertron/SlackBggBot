@@ -96,15 +96,15 @@
             <type>jar</type>
         </dependency>
         <!--Slack API-->
-        <!--        <dependency>
-            <groupId>com.ullink.slack</groupId>
-            <artifactId>simpleslackapi</artifactId>
-            <version>0.6.0</version>
-        </dependency>-->
         <dependency>
             <groupId>com.github.Ullink</groupId>
             <artifactId>simple-slack-api</artifactId>
             <version>master-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.tyrus.bundles</groupId>
+            <artifactId>tyrus-standalone-client</artifactId>
+            <version>1.8.3</version>
         </dependency>
         <!--TESTING-->
         <dependency>
