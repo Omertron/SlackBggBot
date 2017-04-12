@@ -51,7 +51,7 @@ public abstract class AbstractBotTask implements BotTaskInterface {
     private final String name;
     private final int targetHour;
     private final int targetMin;
-    private final static int TARGET_SEC = 0;
+    private static final int TARGET_SEC = 0;
     private final AtomicInteger completedTasks = new AtomicInteger(0);
     private volatile boolean isBusy = false;
 

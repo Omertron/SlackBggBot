@@ -190,6 +190,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
                 botUpdateChannel(session, msgChannel, event);
                 BotStatistics.increment(StatCategory.HOT, msgSender.getUserName());
                 commandHotList(session, msgChannel, query);
+                break;
             default:
                 LOG.info("Unknown command '" + command + "' found. Ignoring.");
         }
@@ -612,7 +613,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         LOG.info(logMessage, username, result.size());
         session.sendMessage(msgChannel, attMessage);
-        result.forEach((game) -> collList.add(createGameAttachment(game)));
+        result.forEach(game -> collList.add(createGameAttachment(game)));
         return collList;
     }
 
