@@ -40,14 +40,10 @@ public class WbbBotTask extends AbstractBotTask {
     @Override
     public void doWork() {
         LOG.info("{} is running", getName());
-        /*
-        Get the sheet info with date of next meeting
-        Send message if today or tomorrow
-         */
 
         SheetInfo sheetInfo = GoogleSheetsListener.getSheetInfo();
         LOG.info("Date of next game is {}", sheetInfo.getFormattedDate("d LLLL"));
-        getSession().sendMessage(getChannel(), "Date of next game is " + sheetInfo.getFormattedDate());
+//        getSession().sendMessage(getChannel(), "Date of next game is " + sheetInfo.getFormattedDate());
 
         LocalDate now = LocalDate.now();
         Period diff = Period.between(now, sheetInfo.getGameDate());
@@ -60,7 +56,13 @@ public class WbbBotTask extends AbstractBotTask {
                 getSession().sendMessage(getChannel(), "Game night is tomorrow!", GoogleSheetsListener.createGameInfo());
                 break;
             default:
-                getSession().sendMessage(getChannel(), "Game night is still " + diff.getDays() + " days away :no_mouth:");
+                StringBuilder sb = new StringBuilder("Game night is ");
+                sb.append(sheetInfo.getFormattedDate("eeee d LLLL"))
+                        .append(" (still ").append(diff.getDays()).append(" away :no_mouth:\n")
+                        ;
+                
+                
+                getSession().sendMessage(getChannel(), sb.toString());
                 break;
         }
 
