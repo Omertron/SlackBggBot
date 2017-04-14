@@ -61,6 +61,7 @@ public class BotTaskExecutor {
         SlackChannel channel = session.findChannelByName("general");
         if (channel == null) {
             LOG.warn("Failed to start MEETUP task");
+            SlackBot.messageAdmins(session, "Failed to start MEETUP task");
         } else {
             TASKS.add(new MeetupBotTask(EXECUTOR_SERVICE, "MEETUP", START_HOUR, START_MIN, session, channel));
         }
@@ -68,6 +69,7 @@ public class BotTaskExecutor {
         channel = session.findChannelById("G3QQES762");
         if (channel == null) {
             LOG.warn("Failed to start WBB task");
+            SlackBot.messageAdmins(session, "Failed to start WBB task");
         } else {
             TASKS.add(new WbbBotTask(EXECUTOR_SERVICE, "WBB", START_HOUR, START_MIN, session, channel));
         }

@@ -19,13 +19,17 @@
  */
 package com.omertron.slackbot.functions.scheduler;
 
+import com.omertron.slackbot.Constants;
+import com.omertron.slackbot.SlackBot;
 import com.omertron.slackbot.listeners.GoogleSheetsListener;
 import com.omertron.slackbot.model.sheets.SheetInfo;
 import com.ullink.slack.simpleslackapi.SlackChannel;
+import com.ullink.slack.simpleslackapi.SlackPreparedMessage;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.concurrent.ScheduledExecutorService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,8 +46,7 @@ public class WbbBotTask extends AbstractBotTask {
         LOG.info("{} is running", getName());
 
         SheetInfo sheetInfo = GoogleSheetsListener.getSheetInfo();
-        LOG.info("Date of next game is {}", sheetInfo.getFormattedDate("d LLLL"));
-//        getSession().sendMessage(getChannel(), "Date of next game is " + sheetInfo.getFormattedDate());
+        LOG.info("Date of next game is {}", sheetInfo.getFormattedDate("EEEE, d MMMM YYYY"));
 
         LocalDate now = LocalDate.now();
         Period diff = Period.between(now, sheetInfo.getGameDate());
@@ -56,16 +59,49 @@ public class WbbBotTask extends AbstractBotTask {
                 getSession().sendMessage(getChannel(), "Game night is tomorrow!", GoogleSheetsListener.createGameInfo());
                 break;
             default:
-                StringBuilder sb = new StringBuilder("Game night is ");
-                sb.append(sheetInfo.getFormattedDate("eeee d LLLL"))
-                        .append(" (still ").append(diff.getDays()).append(" away :no_mouth:\n")
-                        ;
-                
-                
-                getSession().sendMessage(getChannel(), sb.toString());
+                getSession().sendMessage(getChannel(), createMessage(sheetInfo, diff));
                 break;
         }
+    }
 
+    /**
+     * Create a formatted message about the future game night
+     *
+     * @param sheetInfo SheetInfo
+     * @param diff Days to next game night
+     * @return Slack Prepared Message
+     */
+    private SlackPreparedMessage createMessage(SheetInfo sheetInfo, Period diff) {
+        SlackPreparedMessage.Builder spm = new SlackPreparedMessage.Builder().withUnfurl(false);
+
+        StringBuilder sb = new StringBuilder("Game night is ");
+        sb.append(sheetInfo.getFormattedDate("EEEE, d MMMM"))
+                .append(", still ").append(diff.getDays()).append(" days away :no_mouth:\n");
+
+        if (StringUtils.isBlank(sheetInfo.getGameChooser())) {
+            sb.append("There is no-one to chose the next game!!!");
+        } else {
+            sb.append("It's *").append(sheetInfo.getGameChooser()).append("'s* turn to choose");
+            if (sheetInfo.getNextGameId() <= 0) {
+                sb.append(", but no game has been selected yet");
+            } else {
+                sb.append(" and *")
+                        .append(SlackBot.formatLink(Constants.BGG_LINK_GAME + sheetInfo.getNextGameId(), sheetInfo.getGameName()))
+                        .append("* has been picked.\n");
+            }
+
+        }
+
+        // Who's attending?
+        if (sheetInfo.getPlayers().isEmpty()) {
+            sb.append("No-one has said they are going!");
+        } else {
+            sb.append(sheetInfo.getNameList(", ")).append(" are attending");
+        }
+
+        spm.withMessage(sb.toString());
+
+        return spm.build();
     }
 
 }

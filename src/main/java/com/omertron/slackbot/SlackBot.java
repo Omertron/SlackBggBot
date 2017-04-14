@@ -131,8 +131,7 @@ public class SlackBot {
     }
 
     /**
-     * Send a start up message to all BOT admins to inform them of the bot's
-     * restart
+     * Send a start up message to all BOT admins to inform them of the bot's restart
      *
      * @param session
      */
@@ -220,18 +219,30 @@ public class SlackBot {
     }
 
     /**
+     * Create a Slack formatted URL link
+     *
+     * @param url URL
+     * @param text Text to display
+     * @return
+     */
+    public static String formatLink(String url, String text) {
+        return formatLink(null, url, text);
+    }
+
+    /**
      * Format a link
      *
-     * @param marker
-     * @param id
+     * @param preMarker
+     * @param url
      * @param text
      * @return
      */
-    private static String formatLink(String marker, String id, String text) {
-        StringBuilder formatted = new StringBuilder();
-
-        formatted.append("<").append(marker)
-                .append(id)
+    private static String formatLink(String preMarker, String url, String text) {
+        StringBuilder formatted = new StringBuilder("<");
+        if (preMarker != null) {
+            formatted.append(preMarker);
+        }
+        formatted.append(url)
                 .append("|")
                 .append(text)
                 .append(">");
