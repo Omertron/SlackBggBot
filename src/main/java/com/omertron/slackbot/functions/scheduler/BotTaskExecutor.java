@@ -21,6 +21,7 @@ package com.omertron.slackbot.functions.scheduler;
 
 import com.omertron.slackbot.Constants;
 import com.omertron.slackbot.SlackBot;
+import com.omertron.slackbot.utils.PropertiesUtil;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackPreparedMessage;
 import com.ullink.slack.simpleslackapi.SlackSession;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +46,8 @@ public class BotTaskExecutor {
     private static final List<BotTaskInterface> TASKS = new ArrayList<>();
 
     static {
-        START_HOUR = NumberUtils.toInt(SlackBot.getProperty(Constants.BOT_START_HOUR, "8"), 8);
-        START_MIN = NumberUtils.toInt(SlackBot.getProperty(Constants.BOT_START_MIN, "30"), 30);
+        START_HOUR = PropertiesUtil.getIntProperty(Constants.BOT_START_HOUR, 8);
+        START_MIN = PropertiesUtil.getIntProperty(Constants.BOT_START_MIN, 30);
     }
 
     /**
@@ -66,12 +66,25 @@ public class BotTaskExecutor {
             TASKS.add(new MeetupBotTask(EXECUTOR_SERVICE, "MEETUP", START_HOUR, START_MIN, session, channel));
         }
 
-        channel = session.findChannelById("G3QQES762");
+        if (PropertiesUtil.getBooleanProperty(Constants.BOT_TEST, false)) {
+            channel = session.findChannelByName("random");
+        } else {
+            channel = session.findChannelById("G3QQES762");
+        }
         if (channel == null) {
             LOG.warn("Failed to start WBB task");
             SlackBot.messageAdmins(session, "Failed to start WBB task");
         } else {
             TASKS.add(new WbbBotTask(EXECUTOR_SERVICE, "WBB", START_HOUR, START_MIN, session, channel));
+        }
+
+        channel = session.findChannelByName("general");
+        if (channel == null) {
+            LOG.warn("Failed to start UPGRADE task");
+            SlackBot.messageAdmins(session, "Failed to start UPGRADE task");
+        } else {
+            // Start the upgrade task at 0600
+            TASKS.add(new UpgradeTask(EXECUTOR_SERVICE, "UPGRADE", 6, 0, session, channel));
         }
 
         startAll();
@@ -100,6 +113,12 @@ public class BotTaskExecutor {
         for (BotTaskInterface bt : TASKS) {
             LOG.info("Starting BotTask {}", bt.getName());
             bt.start();
+
+            if (bt.getName().contains("UPGRADE")) {
+                bt.doWork();
+            } else {
+                LOG.info("{} not tested", bt.getName());
+            }
         }
     }
 
