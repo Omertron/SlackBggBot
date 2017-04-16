@@ -19,6 +19,7 @@
  */
 package com.omertron.slackbot;
 
+import com.omertron.slackbot.enumeration.ExitCode;
 import com.omertron.slackbot.functions.BotStatistics;
 import com.omertron.slackbot.functions.BotWelcome;
 import com.omertron.slackbot.functions.scheduler.BotTaskExecutor;
@@ -125,9 +126,9 @@ public class SlackBot {
      *
      * @param exitCode
      */
-    public static void shutdown(int exitCode) {
+    public static void shutdown(ExitCode exitCode) {
         executor.stopAll();
-        System.exit(exitCode);
+        System.exit(exitCode.getValue());
     }
 
     /**
