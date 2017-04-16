@@ -22,9 +22,9 @@ package com.omertron.slackbot.functions;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omertron.slackbot.Constants;
-import com.omertron.slackbot.SlackBot;
 import com.omertron.slackbot.model.meetup.MeetupDetails;
 import com.omertron.slackbot.utils.HttpTools;
+import com.omertron.slackbot.utils.PropertiesUtil;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import java.io.IOException;
 import java.net.URL;
@@ -52,7 +52,7 @@ public class Meetup {
 
     static {
         MAPPER = new ObjectMapper();
-        BASE_URL = SlackBot.getProperty(Constants.MEETUP_URL, "");
+        BASE_URL = PropertiesUtil.getProperty(Constants.MEETUP_URL, "");
     }
 
     private Meetup() {
@@ -123,7 +123,7 @@ public class Meetup {
         for (MeetupDetails md : MEETUPS) {
             // Correct for BST
             LocalDateTime meetTime = md.getTime().plusHours(1);
-            
+
             diff = Period.between(now, meetTime.toLocalDate());
             if (diff.getDays() <= daysAhead) {
                 LOG.info("Add: Days: {} - {} - {}", diff.getDays(), meetTime.format(DT_FORMAT), md.getName());

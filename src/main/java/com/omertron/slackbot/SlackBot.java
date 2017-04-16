@@ -26,7 +26,7 @@ import com.omertron.slackbot.functions.scheduler.BotTaskExecutor;
 import com.omertron.slackbot.listeners.BoardGameListener;
 import com.omertron.slackbot.listeners.GoogleSheetsListener;
 import com.omertron.slackbot.listeners.HelpListener;
-import com.omertron.slackbot.utils.PropertyUtils;
+import com.omertron.slackbot.utils.PropertiesUtil;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackPersona;
 import com.ullink.slack.simpleslackapi.SlackSession;
@@ -36,7 +36,6 @@ import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
@@ -45,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class SlackBot {
 
     private static final Logger LOG = LoggerFactory.getLogger(SlackBot.class);
-    private static final Properties PROPS = new Properties();
+//    private static final Properties PROPS = new Properties();
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
     private static final List<SlackUser> BOT_ADMINS = new ArrayList<>();
     private static BotTaskExecutor executor;
@@ -58,17 +57,18 @@ public class SlackBot {
         LOG.info("Starting {} v{} ...", Constants.BOT_NAME, Constants.BOT_VERSION);
 
         // Load the properties
-        PropertyUtils.initProperties(PROPS, DEFAULT_PROPERTIES_FILE);
+//        OLD_PropertyUtils.initProperties(PROPS, DEFAULT_PROPERTIES_FILE);
+        PropertiesUtil.setPropertiesStreamName(DEFAULT_PROPERTIES_FILE);
 
         LOG.info("Starting session...");
         SlackSession session;
 
-        String proxyURL = PROPS.getProperty(Constants.PROXY_HOST);
+        String proxyURL = PropertiesUtil.getProperty(Constants.PROXY_HOST);
         if (StringUtils.isNotBlank(proxyURL)) {
-            int proxyPort = Integer.parseInt(PROPS.getProperty(Constants.PROXY_PORT, "80"));
+            int proxyPort = Integer.parseInt(PropertiesUtil.getProperty(Constants.PROXY_PORT, "80"));
             session = SlackSessionFactory.getSlackSessionBuilder(Constants.BOT_TOKEN).withProxy(Proxy.Type.HTTP, proxyURL, proxyPort).build();
         } else {
-            session = SlackSessionFactory.createWebSocketSlackSession(PROPS.getProperty(Constants.BOT_TOKEN));
+            session = SlackSessionFactory.createWebSocketSlackSession(PropertiesUtil.getProperty(Constants.BOT_TOKEN));
         }
 
         session.connect();
@@ -127,7 +127,9 @@ public class SlackBot {
      * @param exitCode
      */
     public static void shutdown(ExitCode exitCode) {
-        executor.stopAll();
+        if (executor != null) {
+            executor.stopAll();
+        }
         System.exit(exitCode.getValue());
     }
 
@@ -163,7 +165,7 @@ public class SlackBot {
      * @param session
      */
     private static void populateBotAdmins(SlackSession session) {
-        String users = PROPS.getProperty(Constants.BOT_ADMINS, "");
+        String users = PropertiesUtil.getProperty(Constants.BOT_ADMINS, "");
 
         if (StringUtils.isNotBlank(users)) {
             SlackUser sUser;
@@ -249,16 +251,4 @@ public class SlackBot {
                 .append(">");
         return formatted.toString();
     }
-
-    /**
-     * Get a property from the list
-     *
-     * @param key
-     * @param defaultValue
-     * @return
-     */
-    public static String getProperty(String key, String defaultValue) {
-        return PROPS.getProperty(key, defaultValue);
-    }
-
 }
