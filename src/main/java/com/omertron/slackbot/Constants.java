@@ -24,12 +24,14 @@ public final class Constants {
     // Bot information
     public static final String BOT_NAME = "BGG Slack Bot";
     public static final String BOT_VERSION = "1.3";
+    public static final String BOT_TEST = "botTestInstance";
     // Slack Auth Token property name for property file
     public static final String BOT_TOKEN = "botToken";
 
     // Filenames
-    public static final String FILENAME_STAT = "bggbot_stats.json";
-    public static final String FILENAME_USER_LIST = "bggbot_welcomed.json";
+    public static final String FILENAME_BASE = "bggbot_";
+    public static final String FILENAME_STAT = FILENAME_BASE + "stats.json";
+    public static final String FILENAME_USER_LIST = FILENAME_BASE + "welcomed.json";
 
     // Bot config properties
     public static final String BOT_ADMINS = "botAdmins";
