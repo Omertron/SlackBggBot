@@ -36,6 +36,7 @@ import com.omertron.bgg.model.UserInfo;
 import com.omertron.slackbot.Constants;
 import static com.omertron.slackbot.Constants.DELIM_LEFT;
 import static com.omertron.slackbot.Constants.DELIM_RIGHT;
+import com.omertron.slackbot.enumeration.ExitCode;
 import com.omertron.slackbot.enumeration.StatCategory;
 import com.omertron.slackbot.functions.BotStatistics;
 import com.omertron.slackbot.functions.BotWelcome;
@@ -248,7 +249,7 @@ public class BoardGameListener implements SlackMessagePostedListener {
         BotStatistics.increment(StatCategory.ADMIN, sender.getUserName());
 
         // Quit or restart the bot
-        com.omertron.slackbot.SlackBot.shutdown(quit ? 0 : 1);
+        com.omertron.slackbot.SlackBot.shutdown(quit ? ExitCode.QUIT : ExitCode.RESTART);
     }
 
     /**
