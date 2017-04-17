@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
 public class SlackBot {
 
     private static final Logger LOG = LoggerFactory.getLogger(SlackBot.class);
-//    private static final Properties PROPS = new Properties();
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
     private static final List<SlackUser> BOT_ADMINS = new ArrayList<>();
     private static BotTaskExecutor executor;
@@ -57,7 +56,6 @@ public class SlackBot {
         LOG.info("Starting {} v{} ...", Constants.BOT_NAME, Constants.BOT_VERSION);
 
         // Load the properties
-//        OLD_PropertyUtils.initProperties(PROPS, DEFAULT_PROPERTIES_FILE);
         PropertiesUtil.setPropertiesStreamName(DEFAULT_PROPERTIES_FILE);
 
         LOG.info("Starting session...");
