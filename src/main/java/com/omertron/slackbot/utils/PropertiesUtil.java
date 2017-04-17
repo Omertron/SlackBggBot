@@ -29,16 +29,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Properties processing class for YAMJ
+ * Properties processing class
  *
- * @author altman.matthew
+ * @author Omertron
  */
 public final class PropertiesUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(PropertiesUtil.class);
     private static final String PROPERTIES_CHARSET = "UTF-8";
-    public static final String TRUE = "true";
-    public static final String FALSE = "false";
 
     private static final Properties PROPS = new Properties();
 
@@ -72,8 +70,8 @@ public final class PropertiesUtil {
                 if (propertiesStream != null) {
                     propertiesStream.close();
                 }
-            } catch (IOException e) {
-                // Ignore
+            } catch (IOException ex) {
+                LOG.warn("Failed closing properties file {}", streamName, ex);
             }
         }
         return Boolean.TRUE;
