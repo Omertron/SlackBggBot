@@ -82,11 +82,6 @@ public class HelpListener implements SlackMessagePostedListener {
 
     @Override
     public void onEvent(SlackMessagePosted event, SlackSession session) {
-        // Channel On Which Message Was Posted
-        SlackChannel msgChannel = event.getChannel();
-        String msgContent = event.getMessageContent();
-        SlackUser msgSender = event.getSender();
-
         // Filter out the bot's own messages or messages from other bots
         if (session.sessionPersona().getId().equals(event.getSender().getId()) || event.getSender().isBot()) {
             return;
@@ -94,35 +89,46 @@ public class HelpListener implements SlackMessagePostedListener {
 
         if (event.getMessageSubType() == SlackMessagePosted.MessageSubType.CHANNEL_JOIN
                 || event.getMessageSubType() == SlackMessagePosted.MessageSubType.GROUP_JOIN) {
-
             // Send a welcome message (will not re-send if already sent)
-            BotWelcome.sendWelcomeMessage(session, msgChannel, msgSender);
+            BotWelcome.sendWelcomeMessage(session, event.getChannel(), event.getSender());
 
             // No need to continue, so return
             return;
         }
 
+        processMessageEvent(session, event);
+    }
+
+    /**
+     * Process the message event
+     *
+     * @param session SlackSession
+     * @param channel SlackChannel
+     * @param content String content
+     * @param sender SlackUser
+     */
+    private void processMessageEvent(SlackSession session, SlackMessagePosted event) {
         // Search for a user commnd pattern
-        Matcher m = PAT_HELP.matcher(msgContent);
+        Matcher m = PAT_HELP.matcher(event.getMessageContent());
         if (m.matches()) {
             BotStatistics.writeFile();
             String command = m.group(1).toUpperCase();
             switch (command) {
                 case "HELP":
-                    createHelpMessage(session, msgChannel, msgSender);
+                    createHelpMessage(session, event.getChannel(), event.getSender());
                     break;
                 case "ABOUT":
-                    BotStatistics.increment(StatCategory.ABOUT, msgSender.getUserName());
-                    session.sendMessage(msgChannel, "", getAboutMessage());
+                    BotStatistics.increment(StatCategory.ABOUT, event.getSender().getUserName());
+                    session.sendMessage(event.getChannel(), "", getAboutMessage());
                     break;
                 case "STATS":
-                    BotStatistics.increment(StatCategory.STATS, msgSender.getUserName());
-                    String stats = BotStatistics.generateStatistics(true, SlackBot.isBotAdmin(msgSender));
-                    session.sendMessage(msgChannel, stats);
+                    BotStatistics.increment(StatCategory.STATS, event.getSender().getUserName());
+                    String stats = BotStatistics.generateStatistics(true, SlackBot.isBotAdmin(event.getSender()));
+                    session.sendMessage(event.getChannel(), stats);
                     break;
                 case "TASKS":
                     SlackPreparedMessage message = BotTaskExecutor.status();
-                    session.sendMessage(msgChannel, message);
+                    session.sendMessage(event.getChannel(), message);
                     break;
                 default:
                     LOG.warn("Unknown command recieved: '{}'", command);
