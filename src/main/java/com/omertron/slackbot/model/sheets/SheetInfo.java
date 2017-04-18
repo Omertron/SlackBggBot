@@ -53,7 +53,7 @@ public class SheetInfo {
     private String cachePlayerInitList = null;
     private String cachePlayerNameList = null;
 
-    public boolean addItem(final String key, final String value) {
+    public synchronized boolean addItem(final String key, final String value) {
         if (key.startsWith("LAST")) {
             lastRow = NumberUtils.toInt(value, 0);
             return true;

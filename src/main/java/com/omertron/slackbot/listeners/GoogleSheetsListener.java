@@ -213,7 +213,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
      * @param session
      * @param msgChannel
      */
-    private static void readSheetInfo() {
+    private synchronized static void readSheetInfo() {
         sheetInfo = new SheetInfo();
         ValueRange response = GoogleSheets.getSheetData(SS_ID, RANGE_NEXT_GAME_DATA);
 
@@ -224,8 +224,9 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
                 if (!row.isEmpty()) {
                     key = row.get(0).toString().toUpperCase();
                     value = row.size() > 1 ? row.get(1).toString() : null;
-                    LOG.info("{}\t=\t\t'{}'", key, value);
-                    if (!sheetInfo.addItem(key, value)) {
+                    if (sheetInfo.addItem(key, value)) {
+                        LOG.info("Added: '{}'='{}'", key, value);
+                    } else {
                         LOG.info("Unmatched row: '{}'='{}'", key, value);
                     }
                 }
