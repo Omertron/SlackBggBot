@@ -19,7 +19,6 @@
  */
 package com.omertron.slackbot.listeners;
 
-import com.omertron.bgg.BggApi;
 import com.omertron.bgg.BggException;
 import com.omertron.bgg.enums.HotItemType;
 import com.omertron.bgg.enums.IncludeExclude;
@@ -43,7 +42,6 @@ import com.omertron.slackbot.functions.BotWelcome;
 import com.omertron.slackbot.functions.Meetup;
 import com.ullink.slack.simpleslackapi.*;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
-import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,10 +58,9 @@ import org.yamj.api.common.exception.ApiException;
  *
  * @author Omertron
  */
-public class BoardGameListener implements SlackMessagePostedListener {
+public class BoardGameListener extends AbstractListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(BoardGameListener.class);
-    private static final BggApi BGG = new BggApi();
     private static final Pattern PAT_COMMAND;
     private static final Pattern PAT_ADMIN;
     private static final Pattern PAT_COLL_PARAM = Pattern.compile("^(\\w*)(\\s(.+))?$");
@@ -163,32 +160,32 @@ public class BoardGameListener implements SlackMessagePostedListener {
 
         switch (command) {
             case "SEARCH":
-                botUpdateChannel(session, msgChannel, event);
+                botUpdateChannel(session, event, E_GREY_EXCLAMATION);
                 BotStatistics.increment(StatCategory.SEARCH, msgSender.getUserName());
                 commandSearch(session, msgChannel, query);
                 break;
             case "GAME":
-                botUpdateChannel(session, msgChannel, event);
+                botUpdateChannel(session, event, E_GREY_EXCLAMATION);
                 BotStatistics.increment(StatCategory.GAME, msgSender.getUserName());
                 commandGame(session, msgChannel, query);
                 break;
             case "USER":
-                botUpdateChannel(session, msgChannel, event);
+                botUpdateChannel(session, event, E_GREY_EXCLAMATION);
                 BotStatistics.increment(StatCategory.USER, msgSender.getUserName());
                 commandUser(session, msgChannel, query);
                 break;
             case "COLL":
-                botUpdateChannel(session, msgChannel, event);
+                botUpdateChannel(session, event, E_GREY_EXCLAMATION);
                 BotStatistics.increment(StatCategory.COLLECTION, msgSender.getUserName());
                 commandCollection(session, msgChannel, query);
                 break;
             case "MEETUP":
-                botUpdateChannel(session, msgChannel, event);
+                botUpdateChannel(session, event, E_GREY_EXCLAMATION);
                 BotStatistics.increment(StatCategory.MEETUP, msgSender.getUserName());
                 commandMeetup(session, msgChannel, query);
                 break;
             case "HOT":
-                botUpdateChannel(session, msgChannel, event);
+                botUpdateChannel(session, event, E_GREY_EXCLAMATION);
                 BotStatistics.increment(StatCategory.HOT, msgSender.getUserName());
                 commandHotList(session, msgChannel, query);
                 break;
@@ -273,18 +270,6 @@ public class BoardGameListener implements SlackMessagePostedListener {
             session.sendMessage(channel, "Sending welcome message to " + slackUser.getUserName());
             BotWelcome.sendWelcomeMessage(session, channel, slackUser);
         }
-    }
-
-    /**
-     * Add a reaction to the message that called us and send the "typing..." indicator
-     *
-     * @param session
-     * @param msgChannel
-     * @param event
-     */
-    private void botUpdateChannel(SlackSession session, SlackChannel msgChannel, SlackMessagePosted event) {
-        session.addReactionToMessage(msgChannel, event.getTimeStamp(), "grey_exclamation");
-        session.sendTyping(msgChannel);
     }
 
     /**
@@ -759,20 +744,6 @@ public class BoardGameListener implements SlackMessagePostedListener {
             }
         }
         return result.toString();
-    }
-
-    /**
-     * Add the missing "https:" to the front of a URL string
-     *
-     * @param link
-     * @return
-     */
-    private String formatHttpLink(final String link) {
-        if (link == null || link.isEmpty() || link.startsWith("http")) {
-            return link;
-        } else {
-            return "https:" + link;
-        }
     }
 
     /**
