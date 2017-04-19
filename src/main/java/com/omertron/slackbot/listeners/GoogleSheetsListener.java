@@ -20,6 +20,8 @@
 package com.omertron.slackbot.listeners;
 
 import com.google.api.services.sheets.v4.model.ValueRange;
+import com.omertron.bgg.BggException;
+import com.omertron.bgg.model.BoardGameExtended;
 import com.omertron.slackbot.Constants;
 import com.omertron.slackbot.functions.GoogleSheets;
 import com.omertron.slackbot.model.HelpInfo;
@@ -31,7 +33,6 @@ import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
-import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +49,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GoogleSheetsListener implements SlackMessagePostedListener {
+public class GoogleSheetsListener extends AbstractListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(GoogleSheetsListener.class);
     private static final Pattern PAT_SHEETS = Pattern.compile("^\\Qwbb\\E(\\s\\w*)?(\\s.*)?", Pattern.CASE_INSENSITIVE);
@@ -70,7 +71,8 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     private static final String RANGE_GAME_OWNER = "Game Log!I";
 
     /**
-     * Listens for commands to do with the Wirral Biscuits & Boardgame's Google spreadsheet
+     * Listens for commands to do with the Wirral Biscuits & Boardgame's Google
+     * spreadsheet
      *
      */
     public GoogleSheetsListener() {
@@ -148,6 +150,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
                     session.sendMessage(msgChannel, "", helpMessage);
                     break;
                 case "NEXT":
+                    botUpdateChannel(session, event, E_GAME_DIE);
                     readSheetInfo();
                     session.sendMessage(msgChannel, "", createGameInfo(sheetInfo));
                     break;
@@ -176,7 +179,8 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     }
 
     /**
-     * Check the channel and user to see if the bot has been called from the correct place(s)
+     * Check the channel and user to see if the bot has been called from the
+     * correct place(s)
      *
      * @param session
      * @param msgChannel
@@ -247,8 +251,7 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     /**
      * Generate the next game attachment
      *
-     * @param sheetInfo
-     * @return
+     * @return SlackAttachment
      */
     public static SlackAttachment createGameInfo() {
         if (sheetInfo == null) {
@@ -260,25 +263,35 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
     /**
      * Generate the next game attachment
      *
-     * @param sheetInfo
-     * @return
+     * @param sheetInfo Google SheetInfo
+     * @return SlackAttachment
      */
     public static SlackAttachment createGameInfo(SheetInfo sheetInfo) {
         SlackAttachment sa = new SlackAttachment();
 
         if (sheetInfo.getNextGameId() > 0) {
-            sa.setTitle(sheetInfo.getGameName());
-            sa.setTitleLink(Constants.BGG_LINK_GAME + sheetInfo.getNextGameId());
-            sa.setFallback(sheetInfo.getGameName() + " for " + sheetInfo.getFormattedDate("EEE dd MMM"));
+            BoardGameExtended game = getGameInfo(sheetInfo.getNextGameId());
+
+            if (game != null) {
+                sa.setTitle(game.getName());
+                sa.setTitleLink(Constants.BGG_LINK_GAME + game.getId());
+                sa.setFallback(game.getName() + " for " + sheetInfo.getFormattedDate("EEE dd MMM"));
+                sa.setThumbUrl(BoardGameListener.formatHttpLink(game.getThumbnail()));
+            } else {
+                sa.setTitle(sheetInfo.getGameName());
+                sa.setTitleLink(Constants.BGG_LINK_GAME + sheetInfo.getNextGameId());
+                sa.setFallback(sheetInfo.getGameName() + " for " + sheetInfo.getFormattedDate("EEE dd MMM"));
+                sa.setThumbUrl(sheetInfo.getGameImageUrl());
+            }
             sa.setAuthorName("Chosen by " + sheetInfo.getGameChooser());
         } else {
             sa.setAuthorName(sheetInfo.getGameChooser() + " choose a game already!");
             sa.setFallback("No game chosen for " + sheetInfo.getFormattedDate("EEE dd MMM"));
             sa.setTitle(sheetInfo.getGameChooser() + " has not chosen a game yet");
+            sa.setThumbUrl(sheetInfo.getGameImageUrl());
         }
 
         sa.setText("Next game night is " + sheetInfo.getFormattedDate("EEEE, d MMMM"));
-        sa.setThumbUrl(sheetInfo.getGameImageUrl());
 
         if (!sheetInfo.getPlayers().isEmpty()) {
             sa.addField("Attendees", sheetInfo.getNameList(", "), true);
@@ -288,6 +301,25 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
         sa.addField("Next Chooser", sheetInfo.getNextChooser(), true);
 
         return sa;
+    }
+
+    private static BoardGameExtended getGameInfo(int bggId) {
+        if (bggId > 0) {
+            try {
+                List<BoardGameExtended> results = BGG.getBoardGameInfo(bggId);
+                if (results == null || results.isEmpty()) {
+                    return null;
+                }
+
+                return results.get(0);
+            } catch (BggException ex) {
+                LOG.warn("Failed to get information from BGG on game ID {}", bggId, ex);
+                return null;
+            }
+        }
+
+        LOG.warn("No BGG Id given to find");
+        return null;
     }
 
     /**
@@ -317,7 +349,8 @@ public class GoogleSheetsListener implements SlackMessagePostedListener {
 
     /**
      * Attempt to find the user from the parameters passed.<p>
-     * If the name is blank or "me", use the first name of the user from their user profile.
+     * If the name is blank or "me", use the first name of the user from their
+     * user profile.
      *
      * @param name Name to add
      * @param user Slack user details to use instead
