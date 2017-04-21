@@ -85,7 +85,7 @@ public class BoardGameListener extends AbstractListener {
         commands.add("meetup");
         HelpListener.addHelpMessage(25, "meetup", new String[]{"Quantity", "DETAILED"}, "Get a list of the *<Quantity>* upcoming MeetUps.\nAdd the *<Detailed>* keyword to get more information.", false);
         commands.add("hot");
-        HelpListener.addHelpMessage(25, "hot", new String[]{"boardgame", "person", "company"}, "Get the top 10 items from the category passed.\nDefault, if empty, is boardgames.", false);
+        HelpListener.addHelpMessage(26, "hot", new String[]{"boardgame", "person", "company"}, "Get the top 10 items from the category passed.\nDefault, if empty, is boardgames.", false);
 
         String regex = new StringBuilder("(?i)")
                 .append("\\").append(DELIM_LEFT).append("\\").append(DELIM_LEFT)
