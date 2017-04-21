@@ -166,7 +166,11 @@ public class SheetInfo {
     }
 
     public String getFormattedDate(String format) {
-        return gameDate.format(DateTimeFormatter.ofPattern(format));
+        if (gameDate != null) {
+            return gameDate.format(DateTimeFormatter.ofPattern(format));
+        } else {
+            return null;
+        }
     }
 
     public void setGameDate(LocalDate gameDate) {
