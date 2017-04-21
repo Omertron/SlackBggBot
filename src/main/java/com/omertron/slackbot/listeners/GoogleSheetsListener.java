@@ -62,8 +62,8 @@ public class GoogleSheetsListener extends AbstractListener {
     private static final Map<Integer, HelpInfo> HELP = new TreeMap<>();
     private static SlackAttachment helpMessage;
     // Sheet ranges
-    private static final String RANGE_PLAYER_NAMES = "Stats!B4:D14";
-    private static final String RANGE_NEXT_GAME_DATA = "Stats!R16:S27";
+    private static final String RANGE_PLAYER_NAMES = "Stats!B4:D16";
+    private static final String RANGE_NEXT_GAME_DATA = "Stats!R18:S29";
     private static final String RANGE_GAME_NAME = "Game Log!B";
     private static final String RANGE_GAME_CHOOSER = "Game Log!E";
     private static final String RANGE_GAME_ATTENDEES = "Game Log!F";
