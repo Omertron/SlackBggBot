@@ -388,6 +388,11 @@ public class GoogleSheetsListener extends AbstractListener {
         int bestMatch = 0;
         LOG.info("Searching player list for match to '{}'", search);
         for (PlayerInfo pi : PLAYERS.values()) {
+            if (search.equalsIgnoreCase(pi.getInitial())) {
+                LOG.info("Found direct inital match: {}", pi.toString());
+                return pi;
+            }
+
             int newScore = StringUtils.getFuzzyDistance(search, pi.getName(), Locale.ENGLISH);
             if (newScore > bestMatch) {
                 LOG.info("\tBetter match found for '{}' with '{}', new score={}", search, pi.getName(), newScore);
