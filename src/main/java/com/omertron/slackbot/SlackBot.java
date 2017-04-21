@@ -32,6 +32,7 @@ import com.ullink.slack.simpleslackapi.SlackPersona;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory;
+import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener;
 import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.Date;
@@ -47,6 +48,7 @@ public class SlackBot {
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
     private static final List<SlackUser> BOT_ADMINS = new ArrayList<>();
     private static BotTaskExecutor executor;
+    private static final List<SlackMessagePostedListener> LISTENER_MP = new ArrayList<>();
 
     private SlackBot() {
         // No need for a constructor in the main class
@@ -70,16 +72,15 @@ public class SlackBot {
         }
 
         session.connect();
+
         // Populate the BOT admins
         populateBotAdmins(session);
+
         // Notify BOT admins
         notifyStartup(session);
-        // Add board game listner
-        session.addMessagePostedListener(new BoardGameListener());
-        // Add Wirral Biscuits and Boardgames 
-        session.addMessagePostedListener(new GoogleSheetsListener());
-        // Add help listener
-        session.addMessagePostedListener(new HelpListener());
+
+        // Add the listeners to the session
+        addListeners(session);
 
         LOG.info("Session connected: {}", session.isConnected());
         LOG.info("\tConnected to {} ({})", session.getTeam().getName(), session.getTeam().getId());
@@ -98,6 +99,27 @@ public class SlackBot {
         LOG.info("Stats read:\n{}", BotStatistics.generateStatistics(false, true));
 
         Thread.sleep(Long.MAX_VALUE);
+    }
+
+    /**
+     * Add the listeners to the session.
+     *
+     * @param session SlackSession
+     */
+    private static synchronized void addListeners(SlackSession session) {
+        // Only add the listeners once
+        if (LISTENER_MP.isEmpty()) {
+            // Add board game listner
+            LISTENER_MP.add(new BoardGameListener());
+            // Add Wirral Biscuits and Boardgames 
+            LISTENER_MP.add(new GoogleSheetsListener());
+            // Add help listener
+            LISTENER_MP.add(new HelpListener());
+
+            for (SlackMessagePostedListener l : LISTENER_MP) {
+                session.addMessagePostedListener(l);
+            }
+        }
     }
 
     /**
@@ -132,7 +154,8 @@ public class SlackBot {
     }
 
     /**
-     * Send a start up message to all BOT admins to inform them of the bot's restart
+     * Send a start up message to all BOT admins to inform them of the bot's
+     * restart
      *
      * @param session
      */
