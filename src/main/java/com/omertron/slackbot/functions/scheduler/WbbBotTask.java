@@ -81,9 +81,16 @@ public class WbbBotTask extends AbstractBotTask {
         if (StringUtils.isBlank(sheetInfo.getGameChooser())) {
             sb.append("There is no-one to chose the next game!!!");
         } else {
-            sb.append("It's *").append(sheetInfo.getGameChooser()).append("'s* turn to choose");
+            if ("All".equalsIgnoreCase(sheetInfo.getGameChooser())) {
+                sb.append("The group is choosing");
+            } else if ("Other".equalsIgnoreCase(sheetInfo.getGameChooser())) {
+                sb.append("It's someone else's turn to choose");
+            } else {
+                sb.append("It's *").append(sheetInfo.getGameChooser()).append("'s* turn to choose");
+            }
+            
             if (sheetInfo.getNextGameId() <= 0) {
-                sb.append(", but no game has been selected yet");
+                sb.append(", but no game has been selected yet\n");
             } else {
                 sb.append(" and *")
                         .append(SlackBot.formatLink(Constants.BGG_LINK_GAME + sheetInfo.getNextGameId(), sheetInfo.getGameName()))
