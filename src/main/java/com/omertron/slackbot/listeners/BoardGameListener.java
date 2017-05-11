@@ -468,7 +468,8 @@ public class BoardGameListener extends AbstractListener {
         CollectionItemWrapper result;
         try {
             List<IncludeExclude> includes = new ArrayList<>();
-
+            List<IncludeExclude> excludes = new ArrayList<>();
+            
             if (ids == null) {
                 // Just get the username's owned collection
                 includes.add(IncludeExclude.OWN);
@@ -478,7 +479,7 @@ public class BoardGameListener extends AbstractListener {
             }
 
             LOG.info("Getting collection information for '{}' with IDs '{}' & includes '{}'", username, ids, includes);
-            result = BGG.getCollectionInfo(username, ids, includes, null);
+            result = BGG.getCollectionInfo(username, ids, includes, excludes, false);
         } catch (BggException ex) {
             LOG.warn("Failed to get collection for user '{}'", username, ex);
             session.sendMessage(msgChannel, "Failed to get collection for user " + username);
