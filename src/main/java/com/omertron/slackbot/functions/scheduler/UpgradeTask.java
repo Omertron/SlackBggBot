@@ -38,11 +38,9 @@ import org.yamj.api.common.exception.ApiException;
 import org.yamj.api.common.http.SimpleHttpClientBuilder;
 
 /**
- * Class to compare the commit date of the latest code with the build date of
- * this instance.
+ * Class to compare the commit date of the latest code with the build date of this instance.
  *
- * If there is a difference, then shutdown and restart the bot so the startup
- * script can get the latest build.
+ * If there is a difference, then shutdown and restart the bot so the startup script can get the latest build.
  *
  * @author Omertron
  */
@@ -52,6 +50,7 @@ public class UpgradeTask extends AbstractBotTask {
     private static HttpTools httpTools;
     private static final long DIFFERENCE_THRESHOLD = 1l;
     private static final String PROP_BOT_RESTART_DAILY = "botRestartDaily";
+    private static boolean startupRestartChecked = false;
     // URLs
     private static final String URL_GIT_MASTER = "https://api.github.com/repos/omertron/SlackBggBot/git/refs/heads/master";
     private static final String URL_GIT_COMMIT = "https://api.github.com/repos/Omertron/SlackBggBot/git";
@@ -85,10 +84,11 @@ public class UpgradeTask extends AbstractBotTask {
                 SlackBot.shutdown(ExitCode.RESTART);
             }
         } else {
-            if (PropertiesUtil.getBooleanProperty(PROP_BOT_RESTART_DAILY, false)) {
+            if (!startupRestartChecked && PropertiesUtil.getBooleanProperty(PROP_BOT_RESTART_DAILY, false)) {
                 LOG.info("Restart property '{}' is enabled, restarting bot", PROP_BOT_RESTART_DAILY);
                 SlackBot.shutdown(ExitCode.RESTART);
             } else {
+                startupRestartChecked = true;
                 LOG.info("Bot is running latest code.");
             }
         }
