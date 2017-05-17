@@ -27,7 +27,10 @@ import com.omertron.slackbot.utils.HttpTools;
 import com.omertron.slackbot.utils.PropertiesUtil;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackSession;
+import java.lang.management.ManagementFactory;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ScheduledExecutorService;
@@ -38,9 +41,11 @@ import org.yamj.api.common.exception.ApiException;
 import org.yamj.api.common.http.SimpleHttpClientBuilder;
 
 /**
- * Class to compare the commit date of the latest code with the build date of this instance.
+ * Class to compare the commit date of the latest code with the build date of
+ * this instance.
  *
- * If there is a difference, then shutdown and restart the bot so the startup script can get the latest build.
+ * If there is a difference, then shutdown and restart the bot so the startup
+ * script can get the latest build.
  *
  * @author Omertron
  */
@@ -48,9 +53,9 @@ public class UpgradeTask extends AbstractBotTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(UpgradeTask.class);
     private static HttpTools httpTools;
-    private static final long DIFFERENCE_THRESHOLD = 1l;
+    private static final long DIFFERENCE_THRESHOLD = 5l;
     private static final String PROP_BOT_RESTART_DAILY = "botRestartDaily";
-    private static boolean startupRestartChecked = false;
+    private static final long BOT_RESTART_PERIOD = TimeUnit.HOURS.toMinutes(23l) + 45l;
     // URLs
     private static final String URL_GIT_MASTER = "https://api.github.com/repos/omertron/SlackBggBot/git/refs/heads/master";
     private static final String URL_GIT_COMMIT = "https://api.github.com/repos/Omertron/SlackBggBot/git";
@@ -64,6 +69,12 @@ public class UpgradeTask extends AbstractBotTask {
     public void doWork() {
         LOG.info("{} is running", getName());
 
+        // Check to see if a daily restart is required
+        if (dailyRestartRequired()) {
+            // Need to restart
+            SlackBot.shutdown(ExitCode.RESTART);
+        }
+
         LocalDateTime ldtCommit = getLastCommitDate();
         if (ldtCommit == null) {
             LOG.warn("Failed to get commit date, not updating!");
@@ -74,7 +85,11 @@ public class UpgradeTask extends AbstractBotTask {
         LocalDateTime ldtBuild = getBuildDate();
 
         long diff = calculateDifference(ldtBuild, ldtCommit);
-        if (diff >= DIFFERENCE_THRESHOLD) {
+        if (diff <= 0) {
+            LOG.info("Build is later than commit, no need to restart");
+        } else if (diff <= DIFFERENCE_THRESHOLD) {
+            LOG.info("Build is less that threshold, no need to restart");
+        } else {
             String message = String.format("%1$s: Difference between build and latest commit is %2$d minutes, which is greater than the threshold of %3$d minutes", getName(), diff, DIFFERENCE_THRESHOLD);
             LOG.info(message);
             SlackBot.messageAdmins(getSession(), message);
@@ -83,15 +98,39 @@ public class UpgradeTask extends AbstractBotTask {
             } else {
                 SlackBot.shutdown(ExitCode.RESTART);
             }
-        } else {
-            if (!startupRestartChecked && PropertiesUtil.getBooleanProperty(PROP_BOT_RESTART_DAILY, false)) {
-                LOG.info("Restart property '{}' is enabled, restarting bot", PROP_BOT_RESTART_DAILY);
-                SlackBot.shutdown(ExitCode.RESTART);
-            } else {
-                startupRestartChecked = true;
-                LOG.info("Bot is running latest code.");
-            }
         }
+    }
+
+    /**
+     * Check to see if a daily restart is required
+     *
+     * @return True if restart needed
+     */
+    private boolean dailyRestartRequired() {
+        boolean value = false;
+        // Check for the restart daily parameter
+        if (PropertiesUtil.getBooleanProperty(Constants.BOT_TEST, false)) {
+            long jvmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+            LocalDateTime ldtStartUp = LocalDateTime.ofInstant(Instant.ofEpochMilli(jvmStartTime), ZoneId.systemDefault());
+
+            LOG.info("Startup date     : {}", ldtStartUp.toString());
+            LocalDateTime ldtCurrent = LocalDateTime.now();
+            LOG.info("Current date     : {}", ldtCurrent.toString());
+            long diff = calculateDifference(ldtStartUp, ldtCurrent);
+
+            LOG.info("Bot has been running for {} minutes", diff);
+
+            // Check to see if the bot has been running for more than the restart period
+            if (diff >= BOT_RESTART_PERIOD) {
+                LOG.info("Bot needs to be restarted due to daily check");
+                value = true;
+            } else {
+                LOG.info("Bot has been running less than one day");
+                value = false;
+            }
+
+        }
+        return value;
     }
 
     /**
@@ -102,7 +141,7 @@ public class UpgradeTask extends AbstractBotTask {
     private LocalDateTime getBuildDate() {
         GitRepositoryState grs = new GitRepositoryState();
         LocalDateTime ldtBuild = LocalDateTime.parse(grs.getBuildTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss zzz"));
-        LOG.info("Found build date: {}", ldtBuild.toString());
+        LOG.info("Found build date : {}", ldtBuild.toString());
         return ldtBuild;
     }
 
@@ -151,7 +190,9 @@ public class UpgradeTask extends AbstractBotTask {
     private long calculateDifference(LocalDateTime ldtBuild, LocalDateTime ldtCommit) {
         long days = ChronoUnit.DAYS.between(ldtBuild, ldtCommit);
         long hours = ChronoUnit.HOURS.between(ldtBuild, ldtCommit) - TimeUnit.DAYS.toHours(days);
-        long minutes = ChronoUnit.MINUTES.between(ldtBuild, ldtCommit) - TimeUnit.HOURS.toMinutes(hours);
+        long minutes = ChronoUnit.MINUTES.between(ldtBuild, ldtCommit)
+                - TimeUnit.DAYS.toHours(days)
+                - TimeUnit.HOURS.toMinutes(hours);
         long fullMinutes = ChronoUnit.MINUTES.between(ldtBuild, ldtCommit);
         LOG.info("Difference {}: {}d {}h {}m", fullMinutes, days, hours, minutes);
 
