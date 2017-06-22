@@ -173,7 +173,7 @@ public class GoogleSheetsListener extends AbstractListener {
                     updateGenericPlayer(session, msgChannel, RANGE_GAME_CHOOSER, params, "chooser", false);
                     break;
                 default:
-                    session.sendMessage(msgChannel, "Sorry, '" + command + "' is not implemented yet");
+                    session.sendMessage(msgChannel, "Sorry, '" + command + "' is not implemented yet.");
             }
         }
     }
@@ -205,9 +205,21 @@ public class GoogleSheetsListener extends AbstractListener {
      * @return
      */
     public static SheetInfo getSheetInfo() {
-        if (sheetInfo == null) {
+        return getSheetInfo(false);
+    }
+
+    /**
+     * Get the sheet information
+     *
+     * @param forceUpdate Force an update of the sheet information, default
+     * false
+     * @return
+     */
+    public static SheetInfo getSheetInfo(boolean forceUpdate) {
+        if (sheetInfo == null || forceUpdate) {
             readSheetInfo();
         }
+
         return sheetInfo;
     }
 
