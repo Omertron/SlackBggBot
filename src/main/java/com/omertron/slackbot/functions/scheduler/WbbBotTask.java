@@ -45,7 +45,8 @@ public class WbbBotTask extends AbstractBotTask {
     public void doWork() {
         LOG.info("{} is running", getName());
 
-        SheetInfo sheetInfo = GoogleSheetsListener.getSheetInfo();
+        // Get the game information to display, update it just in case things have changed.
+        SheetInfo sheetInfo = GoogleSheetsListener.getSheetInfo(true);
         LOG.info("Date of next game is {}", sheetInfo.getFormattedDate("EEEE, d MMMM YYYY"));
 
         LocalDate now = LocalDate.now();
@@ -53,10 +54,10 @@ public class WbbBotTask extends AbstractBotTask {
 
         switch (diff.getDays()) {
             case 0:
-                getSession().sendMessage(getChannel(), "Game night is tonight!!", GoogleSheetsListener.createGameInfo());
+                getSession().sendMessage(getChannel(), "Game night is tonight!! :grin:", GoogleSheetsListener.createGameInfo());
                 break;
             case 1:
-                getSession().sendMessage(getChannel(), "Game night is tomorrow!", GoogleSheetsListener.createGameInfo());
+                getSession().sendMessage(getChannel(), "Game night is tomorrow! :smile:", GoogleSheetsListener.createGameInfo());
                 break;
             default:
                 getSession().sendMessage(getChannel(), createMessage(sheetInfo, diff));
@@ -76,21 +77,21 @@ public class WbbBotTask extends AbstractBotTask {
 
         StringBuilder sb = new StringBuilder("Game night is ");
         sb.append(sheetInfo.getFormattedDate("EEEE, d MMMM"))
-                .append(", still ").append(diff.getDays()).append(" days away :no_mouth:\n");
+                .append(", still ").append(diff.getDays()).append(" days away\n");
 
         if (StringUtils.isBlank(sheetInfo.getGameChooser())) {
-            sb.append("There is no-one to chose the next game!!!");
+            sb.append("There is no-one to chose the next game!!! :astonished:");
         } else {
             if ("All".equalsIgnoreCase(sheetInfo.getGameChooser())) {
-                sb.append("The group is choosing");
+                sb.append("The group is choosing :open_mouth:");
             } else if ("Other".equalsIgnoreCase(sheetInfo.getGameChooser())) {
-                sb.append("It's someone else's turn to choose");
+                sb.append("It's someone else's turn to choose :open_mouth:");
             } else {
                 sb.append("It's *").append(sheetInfo.getGameChooser()).append("'s* turn to choose");
             }
-            
+
             if (sheetInfo.getNextGameId() <= 0) {
-                sb.append(", but no game has been selected yet\n");
+                sb.append(", but no game has been selected yet :angry:\n");
             } else {
                 sb.append(" and *")
                         .append(SlackBot.formatLink(Constants.BGG_LINK_GAME + sheetInfo.getNextGameId(), sheetInfo.getGameName()))
