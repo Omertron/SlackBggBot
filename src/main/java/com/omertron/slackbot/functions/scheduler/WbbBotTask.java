@@ -91,7 +91,14 @@ public class WbbBotTask extends AbstractBotTask {
             }
 
             if (sheetInfo.getNextGameId() <= 0) {
-                sb.append(", but no game has been selected yet :angry:\n");
+                // There's no game ID, this could be because there's no game selected or an error reading
+                if (StringUtils.isBlank(sheetInfo.getGameName())) {
+                    // No game chosen
+                    sb.append(", but no game has been selected yet :angry:\n");
+                } else {
+                    // Error with reading the sheet or with google's API
+                    sb.append(" and *").append(sheetInfo.getGameName()).append("* has been chosen.\n");
+                }
             } else {
                 sb.append(" and *")
                         .append(SlackBot.formatLink(Constants.BGG_LINK_GAME + sheetInfo.getNextGameId(), sheetInfo.getGameName()))
