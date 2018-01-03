@@ -94,7 +94,9 @@ public class GitRepositoryState {
         if (StringUtils.isNotBlank(valueToConvert)) {
             return Boolean.parseBoolean(StringUtils.trimToEmpty(valueToConvert));
         }
-        return null;
+        
+        // Default to false
+        return Boolean.FALSE;
     }
 
     private static List<String> asList(final String valueToConvert) {
