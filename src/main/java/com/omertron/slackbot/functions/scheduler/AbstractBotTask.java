@@ -149,6 +149,8 @@ public abstract class AbstractBotTask implements BotTaskInterface {
             }
         } catch (InterruptedException ex) {
             LOG.error("{} awaitTermination exception", name, ex);
+            // Restore interrupted state...
+            Thread.currentThread().interrupt();
         } finally {
             LOG.info("{} awaitTermination, finished", name);
         }
