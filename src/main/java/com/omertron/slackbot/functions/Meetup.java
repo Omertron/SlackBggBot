@@ -122,7 +122,7 @@ public class Meetup {
         Period diff;
         for (MeetupDetails md : MEETUPS) {
             // Correct for BST
-            LocalDateTime meetTime = md.getTime().plusHours(1);
+            LocalDateTime meetTime = md.getMeetupTime().plusHours(1);
 
             diff = Period.between(now, meetTime.toLocalDate());
             if (diff.getDays() <= daysAhead) {
@@ -162,7 +162,7 @@ public class Meetup {
         }
 
         // Correct for BST
-        LocalDateTime meetTime = meetupDetails.getTime().plusHours(1);
+        LocalDateTime meetTime = meetupDetails.getMeetupTime().plusHours(1);
         sa.addField("Date", meetTime.format(DT_FORMAT), true);
 
         if (meetupDetails.getHowToFindUs() != null && detailed) {
