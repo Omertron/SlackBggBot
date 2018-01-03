@@ -56,37 +56,39 @@ public class GameLogRow {
      * @param valueRange
      */
     public final void processValueRange(ValueRange valueRange) {
-        if (valueRange.getValues() != null && !valueRange.getValues().isEmpty()) {
-            List<Object> row = valueRange.getValues().get(0);
-
-            if (!row.isEmpty()) {
-                try {
-                    this.date = DateUtils.parseDate(row.get(0).toString().substring(5), "dd MMM yy");
-                } catch (ParseException ex) {
-                    LOG.info("Failed to parse date: '{}'", ex.getMessage());
-                }
-            }
-            if (row.size() >= 2) {
-                this.gameName = row.get(1).toString();
-            }
-            if (row.size() >= 3) {
-                this.gameId = NumberUtils.toInt(row.get(2).toString(), 0);
-            }
-            if (row.size() >= 5) {
-                this.chooser = row.get(4).toString();
-            }
-            if (row.size() >= 6) {
-                this.attendees = row.get(5).toString();
-            }
-            if (row.size() >= 7) {
-                this.winners = row.get(6).toString();
-            }
-            if (row.size() >= 9) {
-                this.owner = row.get(8).toString();
-            }
-
-            LOG.info("{}", ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE));
+        if (valueRange.getValues() == null || valueRange.getValues().isEmpty()) {
+            return;
         }
+
+        List<Object> row = valueRange.getValues().get(0);
+
+        if (!row.isEmpty()) {
+            try {
+                this.date = DateUtils.parseDate(row.get(0).toString().substring(5), "dd MMM yy");
+            } catch (ParseException ex) {
+                LOG.info("Failed to parse date: '{}'", ex.getMessage());
+            }
+        }
+        if (row.size() >= 2) {
+            this.gameName = row.get(1).toString();
+        }
+        if (row.size() >= 3) {
+            this.gameId = NumberUtils.toInt(row.get(2).toString(), 0);
+        }
+        if (row.size() >= 5) {
+            this.chooser = row.get(4).toString();
+        }
+        if (row.size() >= 6) {
+            this.attendees = row.get(5).toString();
+        }
+        if (row.size() >= 7) {
+            this.winners = row.get(6).toString();
+        }
+        if (row.size() >= 9) {
+            this.owner = row.get(8).toString();
+        }
+
+        LOG.info("{}", ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE));
     }
 
     public Date getDate() {
