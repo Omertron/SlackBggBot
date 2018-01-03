@@ -22,8 +22,11 @@ package com.omertron.slackbot.listeners;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.omertron.bgg.BggException;
 import com.omertron.bgg.model.BoardGameExtended;
+import com.omertron.bgg.model.CollectionItem;
+import com.omertron.bgg.model.CollectionItemWrapper;
 import com.omertron.slackbot.Constants;
 import com.omertron.slackbot.functions.GoogleSheets;
+import static com.omertron.slackbot.listeners.AbstractListener.BGG;
 import com.omertron.slackbot.model.HelpInfo;
 import com.omertron.slackbot.model.sheets.GameLogRow;
 import com.omertron.slackbot.model.sheets.PlayerInfo;
@@ -46,6 +49,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.apache.commons.text.similarity.FuzzyScore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +60,7 @@ public class GoogleSheetsListener extends AbstractListener {
     private static final String SS_ID = "1Tbnvj3Colt5CnxlDUNk1L10iANm4jVUvJpD53mjKOYY";
     private static final List<String> CHANNELS = new ArrayList<>();
     private static final Map<String, PlayerInfo> PLAYERS = new HashMap<>();
+    private static final FuzzyScore SCORE = new FuzzyScore(Locale.ENGLISH);
     // Cached Sheet Information
     private static SheetInfo sheetInfo = null;
     // Help data
@@ -405,7 +410,7 @@ public class GoogleSheetsListener extends AbstractListener {
                 return pi;
             }
 
-            int newScore = StringUtils.getFuzzyDistance(search, pi.getName(), Locale.ENGLISH);
+            int newScore = SCORE.fuzzyScore(search, pi.getName());
             if (newScore > bestMatch) {
                 LOG.info("\tBetter match found for '{}' with '{}', new score={}", search, pi.getName(), newScore);
                 bestMatch = newScore;
@@ -601,4 +606,41 @@ public class GoogleSheetsListener extends AbstractListener {
         session.sendMessage(msgChannel, message);
     }
 
+    /**
+     * UNFINISHED
+     *
+     * @param user
+     * @param gameId
+     * @return
+     */
+    private SlackAttachment getGameStats(String user, int gameId) {
+        SlackAttachment sa = new SlackAttachment();
+        sa.setTitle(user);
+
+        CollectionItemWrapper collectionList;
+        try {
+            collectionList = BGG.getCollectionInfo(user, Integer.toString(gameId), null, null, false);
+        } catch (BggException ex) {
+            LOG.warn("Failed to get collection details for {}, game ID {}", user, gameId, ex);
+            return null;
+        }
+
+        if (collectionList.getItems().isEmpty()) {
+            LOG.info("User '{} has no plays for this game");
+
+            sa.addField("Plays", "0", true);
+            sa.addField("Last Play", "Never", true);
+
+            return sa;
+        }
+
+        for (CollectionItem item : collectionList.getItems()) {
+            LOG.info("\t{}", item.toString());
+        }
+
+        CollectionItem item = collectionList.getItems().get(0);
+        sa.addField("Plays", Integer.toString(item.getNumPlays()), true);
+
+        return sa;
+    }
 }

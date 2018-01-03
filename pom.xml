@@ -140,7 +140,12 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.5</version>
+            <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.7</version>
         </dependency>
         <!--GOOGLE SHEETS API-->
         <dependency>
@@ -156,7 +161,12 @@
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-sheets</artifactId>
-            <version>v4-rev489-1.23.0</version>
+            <version>v4-rev490-1.23.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.2</version>
         </dependency>
     </dependencies>
     
@@ -235,7 +245,7 @@
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
-                <version>2.2.3</version>
+                <version>2.2.4</version>
                 <executions>
                     <execution>
                         <phase>generate-resources</phase>
