@@ -421,9 +421,12 @@ public class GoogleSheetsListener extends AbstractListener {
         if (bestMatch < 5) {
             LOG.info("No definitive match found for '{}' (best score was {}), using 'Other'", search, bestMatch);
             return PLAYERS.get("O");
+        } else if (matchedPlayer == null) {
+            LOG.info("No match found for '{}', using 'Other'", search);
+            return PLAYERS.get("O");
         } else {
             LOG.info("Matched '{}' to '{}' with score of {}",
-                    matchedPlayer == null ? "NO MATCH" : matchedPlayer.getName(),
+                    matchedPlayer.getName(),
                     search,
                     bestMatch);
             return matchedPlayer;
