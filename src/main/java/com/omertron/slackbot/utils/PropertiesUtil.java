@@ -52,27 +52,15 @@ public final class PropertiesUtil {
      */
     public static boolean setPropertiesStreamName(final String streamName) {
         LOG.info("Using properties file '{}'", FilenameUtils.normalize(streamName));
-        InputStream propertiesStream = ClassLoader.getSystemResourceAsStream(streamName);
 
-        try {
-            if (propertiesStream == null) {
-                propertiesStream = new FileInputStream(streamName);
-            }
-
+        try (
+                InputStream propertiesStream = new FileInputStream(streamName);) {
             try (Reader reader = new InputStreamReader(propertiesStream, PROPERTIES_CHARSET)) {
                 PROPS.load(reader);
             }
         } catch (IOException error) {
             LOG.error("Failed loading file {}: Please check your configuration. The properties file should be in the classpath.", streamName, error);
             return Boolean.FALSE;
-        } finally {
-            try {
-                if (propertiesStream != null) {
-                    propertiesStream.close();
-                }
-            } catch (IOException ex) {
-                LOG.warn("Failed closing properties file {}", streamName, ex);
-            }
         }
         return Boolean.TRUE;
     }
