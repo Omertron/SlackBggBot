@@ -63,6 +63,7 @@ public class GoogleSheetsListener extends AbstractListener {
     private static final FuzzyScore SCORE = new FuzzyScore(Locale.ENGLISH);
     // Cached Sheet Information
     private static SheetInfo sheetInfo = null;
+    private static final String SHORT_DATE_FORMAT = "EEE dd MMM";
     // Help data
     private static final Map<Integer, HelpInfo> HELP = new TreeMap<>();
     private static SlackAttachment helpMessage;
@@ -99,7 +100,7 @@ public class GoogleSheetsListener extends AbstractListener {
     /**
      * Create the help message for the bot
      */
-    private void generateHelpMessage() {
+    private static void generateHelpMessage() {
         HELP.clear();
         // Add the help commands
         HELP.put(10, new HelpInfo("NEXT", "", "Get information on the next scheduled game for the group", false));
@@ -239,17 +240,10 @@ public class GoogleSheetsListener extends AbstractListener {
         ValueRange response = GoogleSheets.getSheetData(SS_ID, RANGE_NEXT_GAME_DATA);
 
         List<List<Object>> values = response.getValues();
-        String key, value;
         if (values != null && !values.isEmpty()) {
             for (List row : values) {
                 if (!row.isEmpty()) {
-                    key = row.get(0).toString().toUpperCase();
-                    value = row.size() > 1 ? row.get(1).toString() : null;
-                    if (sheetInfo.addItem(key, value)) {
-                        LOG.info("Added: '{}'='{}'", key, value);
-                    } else {
-                        LOG.info("Unmatched row: '{}'='{}'", key, value);
-                    }
+                    decodeRowFromSheet(row);
                 }
             }
         }
@@ -263,6 +257,22 @@ public class GoogleSheetsListener extends AbstractListener {
         }
 
         LOG.info("{}", ToStringBuilder.reflectionToString(sheetInfo, ToStringStyle.MULTI_LINE_STYLE));
+    }
+
+    /**
+     * Extract the information from the sheet row.
+     *
+     * @param row
+     */
+    private static void decodeRowFromSheet(List row) {
+        String key, value;
+        key = row.get(0).toString().toUpperCase();
+        value = row.size() > 1 ? row.get(1).toString() : null;
+        if (sheetInfo.addItem(key, value)) {
+            LOG.info("Added: '{}'='{}'", key, value);
+        } else {
+            LOG.info("Unmatched row: '{}'='{}'", key, value);
+        }
     }
 
     /**
@@ -292,18 +302,18 @@ public class GoogleSheetsListener extends AbstractListener {
             if (game != null) {
                 sa.setTitle(game.getName());
                 sa.setTitleLink(Constants.BGG_LINK_GAME + game.getId());
-                sa.setFallback(game.getName() + " for " + sheetInfo.getFormattedDate("EEE dd MMM"));
+                sa.setFallback(game.getName() + " for " + sheetInfo.getFormattedDate(SHORT_DATE_FORMAT));
                 sa.setThumbUrl(BoardGameListener.formatHttpLink(game.getThumbnail()));
             } else {
                 sa.setTitle(sheetInfo.getGameName());
                 sa.setTitleLink(Constants.BGG_LINK_GAME + sheetInfo.getNextGameId());
-                sa.setFallback(sheetInfo.getGameName() + " for " + sheetInfo.getFormattedDate("EEE dd MMM"));
+                sa.setFallback(sheetInfo.getGameName() + " for " + sheetInfo.getFormattedDate(SHORT_DATE_FORMAT));
                 sa.setThumbUrl(sheetInfo.getGameImageUrl());
             }
             sa.setAuthorName("Chosen by " + sheetInfo.getGameChooser());
         } else {
             sa.setAuthorName(sheetInfo.getGameChooser() + " choose a game already!");
-            sa.setFallback("No game chosen for " + sheetInfo.getFormattedDate("EEE dd MMM"));
+            sa.setFallback("No game chosen for " + sheetInfo.getFormattedDate(SHORT_DATE_FORMAT));
             sa.setTitle(sheetInfo.getGameChooser() + " has not chosen a game yet");
             sa.setThumbUrl(sheetInfo.getGameImageUrl());
         }
