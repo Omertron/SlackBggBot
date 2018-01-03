@@ -42,7 +42,7 @@ public class MeetupDetails extends AbstractJsonMapping {
     @JsonProperty("status")
     private String status;
     @JsonProperty("time")
-    private LocalDateTime time;
+    private LocalDateTime meetupTime;
     @JsonProperty("updated")
     private Date updated;
     @JsonProperty("utc_offset")
@@ -114,12 +114,12 @@ public class MeetupDetails extends AbstractJsonMapping {
         this.status = status;
     }
 
-    public LocalDateTime getTime() {
-        return time;
+    public LocalDateTime getMeetupTime() {
+        return meetupTime;
     }
 
     public void setTime(long time) {
-        this.time = LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.systemDefault());
+        this.meetupTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.systemDefault());
     }
 
     public Date getUpdated() {
