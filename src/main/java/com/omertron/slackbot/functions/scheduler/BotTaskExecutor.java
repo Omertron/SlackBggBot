@@ -69,9 +69,9 @@ public class BotTaskExecutor {
         if (PropertiesUtil.getBooleanProperty(Constants.BOT_TEST, false)) {
             channel = session.findChannelByName("random");
         } else {
-//            channel = session.findChannelById("G3QQES762");
-//            channel = session.findChannelById("G8YNS5U2D");
-            channel = session.findChannelByName("wirral-gaming-coffee");
+            channel = session.findChannelById("D3SJ61NR2");
+//            Doesn't work on private channels?
+//            channel = session.findChannelByName("wirral-gaming-coffee");
         }
         if (channel == null) {
             LOG.warn("Failed to start WBB task");
