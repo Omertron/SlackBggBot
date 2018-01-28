@@ -99,6 +99,8 @@ public final class BotWelcome {
      * @param msgSender
      */
     public static void sendWelcomeMessage(SlackSession session, SlackChannel msgChannel, SlackUser msgSender) {
+        // Always send the welcome on the general channel
+        SlackChannel generalChannel = session.findChannelByName("general");
         // First check to see if the user has already had their welcome message
         if (BotWelcome.isOnList(msgSender)) {
             LOG.info("User '{}' is already on the welcomed list.", msgSender.getUserName());
@@ -133,7 +135,7 @@ public final class BotWelcome {
         msg.addField("Group Admins", getBotAdmins(), false);
 
         String name = StringUtils.isBlank(msgSender.getRealName()) ? msgSender.getUserName() : msgSender.getRealName();
-        session.sendMessage(msgChannel, "Hello " + name);
+        session.sendMessage(generalChannel, "Hello " + name);
         session.sendMessageToUser(msgSender, "", msg);
 
         // Send admins a message
