@@ -78,8 +78,7 @@ public class GoogleSheetsListener extends AbstractListener {
     private static final String RANGE_GAME_OWNER = "Game Log!I";
 
     /**
-     * Listens for commands to do with the Wirral Biscuits & Boardgame's Google
-     * spreadsheet
+     * Listens for commands to do with the Wirral Biscuits & Boardgame's Google spreadsheet
      *
      */
     public GoogleSheetsListener() {
@@ -118,7 +117,8 @@ public class GoogleSheetsListener extends AbstractListener {
 
         StringBuilder text = new StringBuilder("The following commands are available from the game bot for this channel.\n");
         text.append("These commands should be typed on a line on thier own after 'WBB'.\n")
-                .append("E.G. `WBB NEXT`");
+                .append("E.G. `WBB NEXT`\n");
+        text.append("The spreadsheet can be found ").append("<https://docs.google.com/spreadsheets/d/").append(SS_ID).append("|*HERE*>");
 
         helpMessage.setPretext(text.toString());
         helpMessage.addMarkdownIn("fields");
@@ -186,8 +186,7 @@ public class GoogleSheetsListener extends AbstractListener {
     }
 
     /**
-     * Check the channel and user to see if the bot has been called from the
-     * correct place(s)
+     * Check the channel and user to see if the bot has been called from the correct place(s)
      *
      * @param session
      * @param msgChannel
@@ -218,8 +217,7 @@ public class GoogleSheetsListener extends AbstractListener {
     /**
      * Get the sheet information
      *
-     * @param forceUpdate Force an update of the sheet information, default
-     * false
+     * @param forceUpdate Force an update of the sheet information, default false
      * @return
      */
     public static SheetInfo getSheetInfo(boolean forceUpdate) {
@@ -377,8 +375,7 @@ public class GoogleSheetsListener extends AbstractListener {
 
     /**
      * Attempt to find the user from the parameters passed.<p>
-     * If the name is blank or "me", use the first name of the user from their
-     * user profile.
+     * If the name is blank or "me", use the first name of the user from their user profile.
      *
      * @param name Name to add
      * @param user Slack user details to use instead
