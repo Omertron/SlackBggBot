@@ -31,6 +31,7 @@ import com.omertron.slackbot.model.HelpInfo;
 import com.omertron.slackbot.model.sheets.GameLogRow;
 import com.omertron.slackbot.model.sheets.PlayerInfo;
 import com.omertron.slackbot.model.sheets.SheetInfo;
+import com.omertron.slackbot.utils.PropertiesUtil;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
 import com.ullink.slack.simpleslackapi.SlackSession;
@@ -84,7 +85,7 @@ public class GoogleSheetsListener extends AbstractListener {
     public GoogleSheetsListener() {
         // Add the allowed channels
         CHANNELS.add("G3RU2Q5MG"); // bot test
-        CHANNELS.add("G3QQES762"); // WBB channel
+        CHANNELS.add(PropertiesUtil.getProperty(Constants.WBB_CHANNEL_ID)); // WBB channel
 
         // Attempt to initialise the sheet reader
         if (!GoogleSheets.isAuthorised()) {

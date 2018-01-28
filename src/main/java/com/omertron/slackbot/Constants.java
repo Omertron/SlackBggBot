@@ -23,11 +23,14 @@ public final class Constants {
 
     // Bot information
     public static final String BOT_NAME = "BGG Slack Bot";
-    public static final String BOT_VERSION = "1.3";
+    public static final String BOT_VERSION = "1.4";
     public static final String BOT_TEST = "botTestInstance";
     // Slack Auth Token property name for property file
     public static final String BOT_TOKEN = "botToken";
 
+    // WBB Bot Config
+    public static final String WBB_CHANNEL_ID = "wbbChannelId";
+    
     // Filenames
     public static final String FILENAME_BASE = "bggbot_";
     public static final String FILENAME_STAT = FILENAME_BASE + "stats.json";
