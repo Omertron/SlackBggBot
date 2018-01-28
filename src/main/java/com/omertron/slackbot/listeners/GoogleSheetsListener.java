@@ -115,10 +115,11 @@ public class GoogleSheetsListener extends AbstractListener {
 
         helpMessage.setFallback("Help commads for the bot");
 
-        StringBuilder text = new StringBuilder("The following commands are available from the game bot for this channel.\n");
-        text.append("These commands should be typed on a line on thier own after 'WBB'.\n")
+        StringBuilder text = new StringBuilder("The following commands are available from the game bot for this channel.\n\n");
+        text.append("The spreadsheet for the group can be found ").append("<https://docs.google.com/spreadsheets/d/").append(SS_ID).append("|*HERE*>\n\n");
+        text.append("The following commands can be used to edit the sheet for the current game.\n");
+        text.append("They should be typed on a line on thier own after the base command `WBB`.\n")
                 .append("E.G. `WBB NEXT`\n");
-        text.append("The spreadsheet can be found ").append("<https://docs.google.com/spreadsheets/d/").append(SS_ID).append("|*HERE*>");
 
         helpMessage.setPretext(text.toString());
         helpMessage.addMarkdownIn("fields");
