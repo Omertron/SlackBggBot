@@ -114,6 +114,7 @@ public class GoogleSheetsListener extends AbstractListener {
         HELP.put(24, new HelpInfo("OWNER", "Name", "Set *<name>* to be the owner of the game.\nIf blank, will clear the current name", false));
         HELP.put(31, new HelpInfo("GAME", "Game Name", "Sets the next game to be played to *<Game Name>*\nIf blank, will clear the current game name", false));
         HELP.put(32, new HelpInfo("WINNER", "Player", "Sets the winner of the game.\nIf blank, will clear the current winners.\nCan be multiple names comma separated.", false));
+        HELP.put(39, new HelpInfo("NIGHT", "", "Displays the game night information.", false));
 
         helpMessage = new SlackAttachment();
 
