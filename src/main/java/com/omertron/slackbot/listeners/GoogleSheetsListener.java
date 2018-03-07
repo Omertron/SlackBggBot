@@ -39,6 +39,7 @@ import com.ullink.slack.simpleslackapi.SlackPreparedMessage;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
+import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -182,6 +183,9 @@ public class GoogleSheetsListener extends AbstractListener {
                     break;
                 case "CHOOSER":
                     updateGenericPlayer(session, msgChannel, RANGE_GAME_CHOOSER, params, "chooser", false);
+                    break;
+                case "NIGHT":
+                    createGameNightMessage(session, msgChannel);
                     break;
                 default:
                     session.sendMessage(msgChannel, "Sorry, '" + command + "' is not implemented yet.");
@@ -621,14 +625,31 @@ public class GoogleSheetsListener extends AbstractListener {
         session.sendMessage(msgChannel, message);
     }
 
+    public static void createGameNightMessage(SlackSession session, SlackChannel msgChannel) {
+        LocalDate now = LocalDate.now();
+        Period diff = Period.between(now, sheetInfo.getGameDate());
+
+        switch (diff.getDays()) {
+            case 0:
+                session.sendMessage(msgChannel, "Game night is tonight!! :grin:", GoogleSheetsListener.createGameInfo());
+                break;
+            case 1:
+                session.sendMessage(msgChannel, "Game night is tomorrow! :smile:", GoogleSheetsListener.createGameInfo());
+                break;
+            default:
+                session.sendMessage(msgChannel, GoogleSheetsListener.createSimpleNightMessage(sheetInfo, diff));
+                break;
+        }
+    }
+
     /**
-     * Create a formatted message about the future game night
+     * Create a simple formatted message about the future game night
      *
      * @param sheetInfo SheetInfo
      * @param diff Days to next game night
      * @return Slack Prepared Message
      */
-    public static SlackPreparedMessage createGameNightMessage(SheetInfo sheetInfo, Period diff) {
+    public static SlackPreparedMessage createSimpleNightMessage(SheetInfo sheetInfo, Period diff) {
         SlackPreparedMessage.Builder spm = new SlackPreparedMessage.Builder().withUnfurl(false);
 
         StringBuilder sb = new StringBuilder("Game night is ");
