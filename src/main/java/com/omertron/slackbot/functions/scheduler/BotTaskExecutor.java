@@ -117,7 +117,7 @@ public class BotTaskExecutor {
             if (bt.getName().contains("UPGRADE")) {
                 bt.doWork();
             } else {
-                LOG.info("{} not tested", bt.getName());
+                LOG.info("{} scheduled to start at {}:{}", bt.getName(), START_HOUR, START_MIN);
             }
         }
     }

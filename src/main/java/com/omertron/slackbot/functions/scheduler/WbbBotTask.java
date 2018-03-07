@@ -19,17 +19,13 @@
  */
 package com.omertron.slackbot.functions.scheduler;
 
-import com.omertron.slackbot.Constants;
-import com.omertron.slackbot.SlackBot;
 import com.omertron.slackbot.listeners.GoogleSheetsListener;
 import com.omertron.slackbot.model.sheets.SheetInfo;
 import com.ullink.slack.simpleslackapi.SlackChannel;
-import com.ullink.slack.simpleslackapi.SlackPreparedMessage;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.concurrent.ScheduledExecutorService;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,63 +56,8 @@ public class WbbBotTask extends AbstractBotTask {
                 getSession().sendMessage(getChannel(), "Game night is tomorrow! :smile:", GoogleSheetsListener.createGameInfo());
                 break;
             default:
-                getSession().sendMessage(getChannel(), createMessage(sheetInfo, diff));
+                getSession().sendMessage(getChannel(), GoogleSheetsListener.createGameNightMessage(sheetInfo, diff));
                 break;
         }
     }
-
-    /**
-     * Create a formatted message about the future game night
-     *
-     * @param sheetInfo SheetInfo
-     * @param diff Days to next game night
-     * @return Slack Prepared Message
-     */
-    private SlackPreparedMessage createMessage(SheetInfo sheetInfo, Period diff) {
-        SlackPreparedMessage.Builder spm = new SlackPreparedMessage.Builder().withUnfurl(false);
-
-        StringBuilder sb = new StringBuilder("Game night is ");
-        sb.append(sheetInfo.getFormattedDate("EEEE, d MMMM"))
-                .append(", still ").append(diff.getDays()).append(" days away\n");
-
-        if (StringUtils.isBlank(sheetInfo.getGameChooser())) {
-            sb.append("There is no-one to chose the next game!!! :astonished:");
-        } else {
-            if ("All".equalsIgnoreCase(sheetInfo.getGameChooser())) {
-                sb.append("The group is choosing :open_mouth:");
-            } else if ("Other".equalsIgnoreCase(sheetInfo.getGameChooser())) {
-                sb.append("It's someone else's turn to choose :open_mouth:");
-            } else {
-                sb.append("It's *").append(sheetInfo.getGameChooser()).append("'s* turn to choose");
-            }
-
-            if (sheetInfo.getNextGameId() <= 0) {
-                // There's no game ID, this could be because there's no game selected or an error reading
-                if (StringUtils.isBlank(sheetInfo.getGameName())) {
-                    // No game chosen
-                    sb.append(", but no game has been selected yet :angry:\n");
-                } else {
-                    // Error with reading the sheet or with google's API
-                    sb.append(" and *").append(sheetInfo.getGameName()).append("* has been chosen.\n");
-                }
-            } else {
-                sb.append(" and *")
-                        .append(SlackBot.formatLink(Constants.BGG_LINK_GAME + sheetInfo.getNextGameId(), sheetInfo.getGameName()))
-                        .append("* has been picked.\n");
-            }
-
-        }
-
-        // Who's attending?
-        if (sheetInfo.getPlayers().isEmpty()) {
-            sb.append("No-one has said they are going!");
-        } else {
-            sb.append(sheetInfo.getNameList(", ")).append(" are attending");
-        }
-
-        spm.withMessage(sb.toString());
-
-        return spm.build();
-    }
-
 }

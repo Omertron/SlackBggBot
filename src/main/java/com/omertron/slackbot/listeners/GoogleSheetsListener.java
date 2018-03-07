@@ -25,6 +25,7 @@ import com.omertron.bgg.model.BoardGameExtended;
 import com.omertron.bgg.model.CollectionItem;
 import com.omertron.bgg.model.CollectionItemWrapper;
 import com.omertron.slackbot.Constants;
+import com.omertron.slackbot.SlackBot;
 import com.omertron.slackbot.functions.GoogleSheets;
 import static com.omertron.slackbot.listeners.AbstractListener.BGG;
 import com.omertron.slackbot.model.HelpInfo;
@@ -34,9 +35,11 @@ import com.omertron.slackbot.model.sheets.SheetInfo;
 import com.omertron.slackbot.utils.PropertiesUtil;
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackChannel;
+import com.ullink.slack.simpleslackapi.SlackPreparedMessage;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.SlackUser;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -256,7 +259,7 @@ public class GoogleSheetsListener extends AbstractListener {
             }
         }
 
-        LOG.info("{}", ToStringBuilder.reflectionToString(sheetInfo, ToStringStyle.MULTI_LINE_STYLE));
+        LOG.info("SheetInfo READ:\n{}", ToStringBuilder.reflectionToString(sheetInfo, ToStringStyle.MULTI_LINE_STYLE));
     }
 
     /**
@@ -616,6 +619,61 @@ public class GoogleSheetsListener extends AbstractListener {
             message = String.format("Failed to update the %1$s to '%2$s'.", updateType, value);
         }
         session.sendMessage(msgChannel, message);
+    }
+
+    /**
+     * Create a formatted message about the future game night
+     *
+     * @param sheetInfo SheetInfo
+     * @param diff Days to next game night
+     * @return Slack Prepared Message
+     */
+    public static SlackPreparedMessage createGameNightMessage(SheetInfo sheetInfo, Period diff) {
+        SlackPreparedMessage.Builder spm = new SlackPreparedMessage.Builder().withUnfurl(false);
+
+        StringBuilder sb = new StringBuilder("Game night is ");
+        sb.append(sheetInfo.getFormattedDate("EEEE, d MMMM"))
+                .append(", still ").append(diff.getDays()).append(" days away\n");
+
+        if (StringUtils.isBlank(sheetInfo.getGameChooser())) {
+            sb.append("There is no-one to chose the next game!!! :astonished:");
+        } else {
+            if ("All".equalsIgnoreCase(sheetInfo.getGameChooser())) {
+                sb.append("The group is choosing :open_mouth:");
+            } else if ("Other".equalsIgnoreCase(sheetInfo.getGameChooser())) {
+                sb.append("It's someone else's turn to choose :open_mouth:");
+            } else {
+                sb.append("It's *").append(sheetInfo.getGameChooser()).append("'s* turn to choose");
+            }
+
+            if (sheetInfo.getNextGameId() <= 0) {
+                // There's no game ID, this could be because there's no game selected or an error reading
+                if (StringUtils.isBlank(sheetInfo.getGameName())) {
+                    // No game chosen
+                    LOG.error("SheetInfo READ:\n{}", ToStringBuilder.reflectionToString(sheetInfo, ToStringStyle.MULTI_LINE_STYLE));
+                    sb.append(", but no game has been selected yet :angry:\n");
+                } else {
+                    // Error with reading the sheet or with google's API
+                    sb.append(" and *").append(sheetInfo.getGameName()).append("* has been chosen.\n");
+                }
+            } else {
+                sb.append(" and *")
+                        .append(SlackBot.formatLink(Constants.BGG_LINK_GAME + sheetInfo.getNextGameId(), sheetInfo.getGameName()))
+                        .append("* has been picked.\n");
+            }
+
+        }
+
+        // Who's attending?
+        if (sheetInfo.getPlayers().isEmpty()) {
+            sb.append("No-one has said they are going!");
+        } else {
+            sb.append(sheetInfo.getNameList(", ")).append(" are attending");
+        }
+
+        spm.withMessage(sb.toString());
+
+        return spm.build();
     }
 
     /**
