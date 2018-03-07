@@ -264,6 +264,12 @@ public class GoogleSheetsListener extends AbstractListener {
             }
         }
 
+        // Deal with the issue that the game ID may have been read as "#NAME?" due to the sheet recalculating
+        if (sheetInfo.getNextGameId() <= 0) {
+            LOG.info("Updated game ID from {} to {}", sheetInfo.getNextGameId(), row.getGameId());
+            sheetInfo.setNextGameId(row.getGameId());
+        }
+
         LOG.info("SheetInfo READ:\n{}", ToStringBuilder.reflectionToString(sheetInfo, ToStringStyle.MULTI_LINE_STYLE));
     }
 
