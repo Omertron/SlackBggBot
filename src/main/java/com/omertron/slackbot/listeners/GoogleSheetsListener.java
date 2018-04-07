@@ -62,11 +62,11 @@ public class GoogleSheetsListener extends AbstractListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(GoogleSheetsListener.class);
     private static final Pattern PAT_SHEETS = Pattern.compile("^\\Qwbb\\E(\\s\\w*)?(\\s.*)?", Pattern.CASE_INSENSITIVE);
-    private static final String SS_ID = "1Tbnvj3Colt5CnxlDUNk1L10iANm4jVUvJpD53mjKOYY";
     private static final List<String> CHANNELS = new ArrayList<>();
     private static final Map<String, PlayerInfo> PLAYERS = new HashMap<>();
     private static final FuzzyScore SCORE = new FuzzyScore(Locale.ENGLISH);
     // Cached Sheet Information
+    private static final String SS_ID = "1Tbnvj3Colt5CnxlDUNk1L10iANm4jVUvJpD53mjKOYY";
     private static SheetInfo sheetInfo = null;
     private static final String SHORT_DATE_FORMAT = "EEE dd MMM";
     // Help data
