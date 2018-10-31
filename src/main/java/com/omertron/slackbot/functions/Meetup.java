@@ -48,11 +48,13 @@ public class Meetup {
     private static final ObjectMapper MAPPER;
     private static final List<MeetupDetails> MEETUPS = new ArrayList<>();
     private static final String BASE_URL;
+    private static final Boolean IS_GMT;
     private static final DateTimeFormatter DT_FORMAT = DateTimeFormatter.ofPattern("EEEE d MMMM h:mma");
 
     static {
         MAPPER = new ObjectMapper();
         BASE_URL = PropertiesUtil.getProperty(Constants.MEETUP_URL, "");
+        IS_GMT = PropertiesUtil.getBooleanProperty(Constants.MEETUP_IS_GMT, true);
     }
 
     private Meetup() {
@@ -161,8 +163,11 @@ public class Meetup {
             sa.addField("Venue", meetupDetails.getVenue().getName(), true);
         }
 
-        // Correct for BST
-        LocalDateTime meetTime = meetupDetails.getMeetupTime().plusHours(1);
+        LocalDateTime meetTime = meetupDetails.getMeetupTime();
+        if (!IS_GMT) {
+            // Correct for BST
+            meetTime = meetTime.plusHours(1);
+        }
         sa.addField("Date", meetTime.format(DT_FORMAT), true);
 
         if (meetupDetails.getHowToFindUs() != null && detailed) {

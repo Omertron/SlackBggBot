@@ -30,7 +30,7 @@ public final class Constants {
 
     // WBB Bot Config
     public static final String WBB_CHANNEL_ID = "wbbChannelId";
-    
+
     // Filenames
     public static final String FILENAME_BASE = "bggbot_";
     public static final String FILENAME_STAT = FILENAME_BASE + "stats.json";
@@ -58,6 +58,10 @@ public final class Constants {
 
     // Meetup stuff
     public static final String MEETUP_URL = "meetupUrl";
+    public static final String MEETUP_IS_GMT = "meetupIsGMT";
+
+    // Game Night stuff
+    public static final String DEFAULT_GAME_TIME = "defaultGameTime";
 
     private Constants() {
         throw new UnsupportedOperationException("Class cannot be instantiated");
