@@ -24,6 +24,7 @@ import com.omertron.slackbot.functions.BotStatistics;
 import com.omertron.slackbot.functions.BotWelcome;
 import com.omertron.slackbot.functions.scheduler.BotTaskExecutor;
 import com.omertron.slackbot.listeners.BoardGameListener;
+import com.omertron.slackbot.listeners.GameNightListener;
 import com.omertron.slackbot.listeners.GoogleSheetsListener;
 import com.omertron.slackbot.listeners.HelpListener;
 import com.omertron.slackbot.utils.PropertiesUtil;
@@ -113,6 +114,8 @@ public class SlackBot {
             LISTENER_MP.add(new BoardGameListener());
             // Add Wirral Biscuits and Boardgames 
             LISTENER_MP.add(new GoogleSheetsListener());
+            // Add Game Night listener
+            LISTENER_MP.add(new GameNightListener());
             // Add help listener
             LISTENER_MP.add(new HelpListener());
 
