@@ -55,8 +55,15 @@ public class WbbBotTask extends AbstractBotTask {
             case 1:
                 getSession().sendMessage(getChannel(), "Game night is tomorrow! :smile:", GoogleSheetsListener.createGameInfo());
                 break;
-            default:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
                 getSession().sendMessage(getChannel(), GoogleSheetsListener.createSimpleNightMessage(sheetInfo, diff));
+                break;
+            default:
                 break;
         }
     }
