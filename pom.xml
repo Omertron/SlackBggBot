@@ -57,7 +57,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Versions -->
-        <version.slf4j>1.7.25</version.slf4j>
+        <version.slf4j>1.7.26</version.slf4j>
         <version.logback>1.2.3</version.logback>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -151,18 +151,18 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.8.1</version>
+            <version>3.9</version>
         </dependency>
         <!--GOOGLE SHEETS API-->
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client</artifactId>
-            <version>1.28.0</version>
+            <version>1.29.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client-jetty</artifactId>
-            <version>1.28.0</version>
+            <version>1.30.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.apis</groupId>
@@ -196,7 +196,7 @@
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.3</version>
+                    <version>0.8.4</version>
                     <configuration>
                         <append>true</append>
                     </configuration>
@@ -251,7 +251,7 @@
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
-                <version>2.2.6</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <phase>generate-resources</phase>
