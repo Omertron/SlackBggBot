@@ -40,6 +40,7 @@ import com.omertron.slackbot.enumeration.StatCategory;
 import com.omertron.slackbot.functions.BotStatistics;
 import com.omertron.slackbot.functions.BotWelcome;
 import com.omertron.slackbot.functions.Meetup;
+import com.omertron.slackbot.utils.PropertiesUtil;
 import com.ullink.slack.simpleslackapi.*;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
 import java.util.ArrayList;
@@ -82,8 +83,10 @@ public class BoardGameListener extends AbstractListener {
                 "Get a list of the owned games for a BGG user that match the ID list.", false);
         commands.add("user");
         HelpListener.addHelpMessage(20, "user", USERNAME, "Get information on a BGG user.", false);
-        commands.add("meetup");
-        HelpListener.addHelpMessage(25, "meetup", new String[]{"Quantity", "DETAILED"}, "Get a list of the *<Quantity>* upcoming MeetUps.\nAdd the *<Detailed>* keyword to get more information.", false);
+        if (PropertiesUtil.getBooleanProperty(Constants.MEETUP_ENABLE, true)) {
+            commands.add("meetup");
+            HelpListener.addHelpMessage(25, "meetup", new String[]{"Quantity", "DETAILED"}, "Get a list of the *<Quantity>* upcoming MeetUps.\nAdd the *<Detailed>* keyword to get more information.", false);
+        }
         commands.add("hot");
         HelpListener.addHelpMessage(26, "hot", new String[]{"boardgame", "person", "company"}, "Get the top 10 items from the category passed.\nDefault, if empty, is boardgames.", false);
 
@@ -469,7 +472,7 @@ public class BoardGameListener extends AbstractListener {
         try {
             List<IncludeExclude> includes = new ArrayList<>();
             List<IncludeExclude> excludes = new ArrayList<>();
-            
+
             if (ids == null) {
                 // Just get the username's owned collection
                 includes.add(IncludeExclude.OWN);
