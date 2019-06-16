@@ -113,6 +113,8 @@ public class SlackBot {
             LISTENER_MP.add(new BoardGameListener());
             // Add Wirral Biscuits and Boardgames 
             LISTENER_MP.add(new GoogleSheetsListener());
+            // Add Game Night listener
+//            LISTENER_MP.add(new GameNightListener());
             // Add help listener
             LISTENER_MP.add(new HelpListener());
 
