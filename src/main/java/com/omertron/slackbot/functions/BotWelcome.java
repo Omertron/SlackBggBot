@@ -100,7 +100,7 @@ public final class BotWelcome {
      */
     public static void sendWelcomeMessage(SlackSession session, SlackChannel msgChannel, SlackUser msgSender) {
         // Always send the welcome on the general channel
-        SlackChannel generalChannel = session.findChannelByName("general");
+        SlackChannel channelMain = session.findChannelByName(Constants.BOT_MAIN_CHANNEL);
         // First check to see if the user has already had their welcome message
         if (BotWelcome.isOnList(msgSender)) {
             LOG.info("User '{}' is already on the welcomed list.", msgSender.getUserName());
@@ -116,6 +116,7 @@ public final class BotWelcome {
 
         String bot = SlackBot.formatUsernameLink(session.sessionPersona());
         StringBuilder text = new StringBuilder();
+        /*
         text.append("Thank you for joining our slack group!\n")
                 .append("The idea of this group is to facilitate informal chats and discussions about boardgaming, ")
                 .append("although not limited to that at all!\n\n");
@@ -126,16 +127,46 @@ public final class BotWelcome {
                 .append(") that can get useful information from _BGG_ for you.\n");
 
         text.append("Just send the command `[[help]]` in a direct message to the bot or in the ")
-                .append(SlackBot.formatChannelLink(session.findChannelByName("general")))
+                .append(SlackBot.formatChannelLink(session.findChannelByName(Constants.BOT_MAIN_CHANNEL)))
                 .append(" channel and the bot will tell you what it can do!\n\n");
         text.append("We hope you enjoy your chats!\n");
+         */
 
+        text.append("Hi and welcome to our boardgaming Slack group.\n");
+        text.append("This Slack group tries to achieve one main thing, and that is to bring together boardgamers and create a community ")
+                .append("up here.  It may be called Liverpool but it covers the Wirral, Chester and more.\n\n");
+
+        text.append("We have a lot of gaming activity in these areas, but it feels very disconnected, so our goal is that ")
+                .append("this community is available to everyone to use for their gaming chatter and meeting organisation.\n\n");
+
+        text.append("You may have joined from the public self-invite link, or someone else invited you here.  So maybe you ")
+                .append("know where to look, or maybe you don’t.  The structure of this Slack is basically an ")
+                .append("#announcements").append(" channel where we post anything of import, usually reminders about what events are going on.\n");
+        text.append("We then have a ").append("#chat").append(" channel for anything generic and this is mainly where people talk.\n");
+        text.append("Then there are several game night specific channels for the various meetings.  To name a few this includes ")
+                .append(SlackBot.formatChannelLink(session.findChannelByName("liverpool-lions"))).append(", ")
+                .append(SlackBot.formatChannelLink(session.findChannelByName("thursday-cross-keys"))).append(", ")
+                .append(SlackBot.formatChannelLink(session.findChannelByName("ep-and-c-centurions"))).append(" and ")
+                .append(SlackBot.formatChannelLink(session.findChannelByName("st-helens-game-club")))
+                .append(" to name but a few!\n");
+        text.append("Please join any of these you like and start coming along to the game nights.\n\n");
+
+        text.append("Finally you can use this Slack for private messaging with other members for any reason you like.  ")
+                .append("We basically just want you and all your gaming friends to use it and help that community grow!\n\n");
+
+        text.append("So thank you for joining.  We hope you find it useful and get involved.  ")
+                .append("Any questions dont be afraid to ask :slightly_smiling_face:\n");
+
+        text.append("We also have a BoardGameGeek Bot (")
+                .append(bot)
+                .append(") that can get useful information from _BGG_ for you.\n");
+        text.append("Just send the command `[[help]]` in a direct message to the bot and the bot will tell you what it can do!\n");
         msg.setText(text.toString());
 
         msg.addField("Group Admins", getBotAdmins(), false);
 
         String name = StringUtils.isBlank(msgSender.getRealName()) ? msgSender.getUserName() : msgSender.getRealName();
-        session.sendMessage(generalChannel, "Hello " + name);
+        session.sendMessage(channelMain, "Hello " + name);
         session.sendMessageToUser(msgSender, "", msg);
 
         // Send admins a message

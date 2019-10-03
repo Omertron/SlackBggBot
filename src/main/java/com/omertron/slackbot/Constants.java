@@ -42,6 +42,7 @@ public final class Constants {
     public static final String DELIM_RIGHT = "]";
     public static final String BOT_START_HOUR = "botStartHour";
     public static final String BOT_START_MIN = "botStartMin";
+    public static final String BOT_MAIN_CHANNEL = "chat";
 
     public static final String ATTACH_COLOUR_GOOD = "good";
 

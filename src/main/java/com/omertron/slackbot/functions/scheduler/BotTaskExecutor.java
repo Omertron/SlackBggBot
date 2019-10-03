@@ -58,37 +58,37 @@ public class BotTaskExecutor {
     public BotTaskExecutor(SlackSession session) {
         LOG.info("Start time: {}", String.format("%1$-2d:%2$-2d", START_HOUR, START_MIN));
 
-        SlackChannel channelChat = session.findChannelByName("chat");
+        SlackChannel channelBotMain = session.findChannelByName(Constants.BOT_MAIN_CHANNEL);
 
         // Enable/disabe the Meetup bot
         if (PropertiesUtil.getBooleanProperty(Constants.MEETUP_ENABLE, true)) {
-            if (channelChat == null) {
+            if (channelBotMain == null) {
                 LOG.warn("Failed to start MEETUP task");
                 SlackBot.messageAdmins(session, "Failed to start MEETUP task");
             } else {
-                TASKS.add(new MeetupBotTask(EXECUTOR_SERVICE, "MEETUP", START_HOUR, START_MIN, session, channelChat));
+                TASKS.add(new MeetupBotTask(EXECUTOR_SERVICE, "MEETUP", START_HOUR, START_MIN, session, channelBotMain));
             }
         }
 
         if (PropertiesUtil.getBooleanProperty(Constants.BOT_TEST, false)) {
-            channelChat = session.findChannelByName("random");
+            channelBotMain = session.findChannelByName("random");
         } else {
-            channelChat = session.findChannelById(PropertiesUtil.getProperty(Constants.WBB_CHANNEL_ID));
+            channelBotMain = session.findChannelById(PropertiesUtil.getProperty(Constants.WBB_CHANNEL_ID));
         }
-        if (channelChat == null) {
+        if (channelBotMain == null) {
             LOG.warn("Failed to start WBB task");
             SlackBot.messageAdmins(session, "Failed to start WBB task");
         } else {
-            TASKS.add(new WbbBotTask(EXECUTOR_SERVICE, "WBB", START_HOUR, START_MIN, session, channelChat));
+            TASKS.add(new WbbBotTask(EXECUTOR_SERVICE, "WBB", START_HOUR, START_MIN, session, channelBotMain));
         }
 
-        channelChat = session.findChannelByName("chat");
-        if (channelChat == null) {
+        channelBotMain = session.findChannelByName(Constants.BOT_MAIN_CHANNEL);
+        if (channelBotMain == null) {
             LOG.warn("Failed to start UPGRADE task");
             SlackBot.messageAdmins(session, "Failed to start UPGRADE task");
         } else {
             // Start the upgrade task at 0600
-            TASKS.add(new UpgradeTask(EXECUTOR_SERVICE, "UPGRADE", 6, 0, session, channelChat));
+            TASKS.add(new UpgradeTask(EXECUTOR_SERVICE, "UPGRADE", 6, 0, session, channelBotMain));
         }
 
         startAll();
