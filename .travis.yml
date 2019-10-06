@@ -1,6 +1,8 @@
 language: java
 
 before_deploy:
+  - export TRAVIS_TAG="1.0.$TRAVIS_BUILD_NUMBER"
+  - echo "$TRAVIS_TAG" "$TRAVIS_COMMIT"
   - ls target
 
 deploy:
@@ -11,7 +13,7 @@ deploy:
   skip_cleanup: true
   overwrite: true
   
-  tag_name: Latest
+  tag_name: "Latest"
   
   token: $GITHUB_TOKEN
   file: target/slack-bot-*.jar
