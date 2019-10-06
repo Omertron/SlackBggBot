@@ -5,7 +5,7 @@ before_deploy:
   - git config --global user.name "Travis CI"
   - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
   - git tag $TRAVIS_TAG
-  - ls -R
+  - ls target
 
 deploy:
   skip_cleanup: true
@@ -13,7 +13,7 @@ deploy:
   token: $GITHUB_TOKEN
   file: target/slack-bot-*.jar
   on:
-    tags: false
+    tags: true
 
 # Skip commits that are just the push of the release tag
 branches:
