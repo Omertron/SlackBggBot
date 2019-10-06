@@ -1,1 +1,8 @@
 language: java
+deploy:
+  provider: releases
+  token: $GITHUB_TOKEN
+  file: target/slack-bot-*.jar
+  on:
+    tags: true
+    
