@@ -1,24 +1,22 @@
 language: java
 
+# Keep cache between runs
+cache:
+  directories:
+  - $HOME/.m2
+  
 before_deploy:
-  - export TRAVIS_TAG="1.0.$TRAVIS_BUILD_NUMBER"
-  - echo "$TRAVIS_TAG" "$TRAVIS_COMMIT"
   - ls target
 
 deploy:
-  provider: releases
+  provider: bintray
   # ⋮
   edge: true
 
   skip_cleanup: true
-  overwrite: true
-  
-  tag_name: "Latest"
-  
-  token: $GITHUB_TOKEN
   file: target/slack-bot-*.jar
-  on:
-    tags: true
+  user: omertron
+  key: $BINTRAY_APIKEY
 
 # Skip commits that are just the push of the release tag
 branches:
