@@ -8,8 +8,11 @@ before_deploy:
   - ls target
 
 deploy:
-  skip_cleanup: true
   provider: releases
+  # ⋮
+  edge: true
+
+  skip_cleanup: true
   token: $GITHUB_TOKEN
   file: target/slack-bot-*.jar
   on:
